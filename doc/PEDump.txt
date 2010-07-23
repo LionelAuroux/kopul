@@ -1,0 +1,149 @@
+DOS-header, starting at 0x0:
+    00 | 4d 5a 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+    10 | 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+    20 | 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+    30 | 00 00 00 00 00 00 00 00 00 00 00 00 40 00 00 00
+
+signature, starting at 0x40:
+        50 45 00 00
+
+file-header, starting at 0x44:
+    Machine                     4c 01       ; i386
+    NumberOfSections            02 00       ; code and data
+    TimeDateStamp               00 00 00 00 ; who cares?
+    PointerToSymbolTable        00 00 00 00 ; unused
+    NumberOfSymbols             00 00 00 00 ; unused
+    SizeOfOptionalHeader        e0 00       ; constant
+    Characteristics             02 01       ; executable on 32-bit-machine
+
+optional header, starting at 0x58:
+    Magic                       0b 01       ; constant
+    MajorLinkerVersion          00          ; I'm version 0.0 :-)
+    MinorLinkerVersion          00          ;
+    SizeOfCode                  20 00 00 00 ; 32 bytes of code
+    SizeOfInitializedData       a0 00 00 00 ; data section size
+    SizeOfUninitializedData     00 00 00 00 ; we don't have a BSS
+    AddressOfEntryPoint         a0 01 00 00 ; beginning of code section
+    BaseOfCode                  a0 01 00 00 ; RVA to code section
+    BaseOfData                  c0 01 00 00 ; RVA to data section
+    ImageBase                   00 00 10 00 ; 1 MB, chosen arbitrarily
+    SectionAlignment            20 00 00 00 ; 32-bytes-alignment
+    FileAlignment               20 00 00 00 ; 32-bytes-alignment
+    MajorOperatingSystemVersion  04 00      ; NT 4.0
+    MinorOperatingSystemVersion  00 00      ;
+    MajorImageVersion           00 00       ; version 0.0
+    MinorImageVersion           00 00       ;
+    MajorSubsystemVersion       04 00       ; Win32 4.0
+    MinorSubsystemVersion       00 00       ;
+    Win32VersionValue           00 00 00 00 ; unused?
+    SizeOfImage                 c0 00 00 00 ; sum of all section sizes
+    SizeOfHeaders               a0 01 00 00 ; offset to 1st section
+    CheckSum                    00 00 00 00 ; not used for non-drivers
+    Subsystem                   03 00       ; Win32 console
+    DllCharacteristics          00 00       ; unused (not a DLL)
+    SizeOfStackReserve          00 00 10 00 ; 1 MB stack
+    SizeOfStackCommit           00 10 00 00 ; 4 KB to start with
+    SizeOfHeapReserve           00 00 10 00 ; 1 MB heap
+    SizeOfHeapCommit            00 10 00 00 ; 4 KB to start with
+    LoaderFlags                 00 00 00 00 ; unknown
+    NumberOfRvaAndSizes         10 00 00 00 ; constant
+
+data directories, starting at 0xb8:
+    Address        Size
+    00 00 00 00    00 00 00 00         ; IMAGE_DIRECTORY_ENTRY_EXPORT (0)
+    e0 01 00 00    6f 00 00 00         ; IMAGE_DIRECTORY_ENTRY_IMPORT (1)
+    00 00 00 00    00 00 00 00         ; IMAGE_DIRECTORY_ENTRY_RESOURCE (2)
+    00 00 00 00    00 00 00 00         ; IMAGE_DIRECTORY_ENTRY_EXCEPTION (3)
+    00 00 00 00    00 00 00 00         ; IMAGE_DIRECTORY_ENTRY_SECURITY (4)
+    00 00 00 00    00 00 00 00         ; IMAGE_DIRECTORY_ENTRY_BASERELOC (5)
+    00 00 00 00    00 00 00 00         ; IMAGE_DIRECTORY_ENTRY_DEBUG (6)
+    00 00 00 00    00 00 00 00         ; IMAGE_DIRECTORY_ENTRY_COPYRIGHT (7)
+    00 00 00 00    00 00 00 00         ; IMAGE_DIRECTORY_ENTRY_GLOBALPTR (8)
+    00 00 00 00    00 00 00 00         ; IMAGE_DIRECTORY_ENTRY_TLS (9)
+    00 00 00 00    00 00 00 00         ; IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG (10)
+    00 00 00 00    00 00 00 00         ; IMAGE_DIRECTORY_ENTRY_BOUND_IMPORT (11)
+    00 00 00 00    00 00 00 00         ; IMAGE_DIRECTORY_ENTRY_IAT (12)
+    00 00 00 00    00 00 00 00         ; 13
+    00 00 00 00    00 00 00 00         ; 14
+    00 00 00 00    00 00 00 00         ; 15
+
+section header (code), starting at 0x138:
+    Name            2e 63 6f 64 65 00 00 00     ; ".code"
+    VirtualSize         00 00 00 00             ; unused
+    VirtualAddress      a0 01 00 00             ; RVA to code section
+    SizeOfRawData       20 00 00 00             ; size of code
+    PointerToRawData    a0 01 00 00             ; file offset to code section
+    PointerToRelocations 00 00 00 00            ; unused
+    PointerToLinenumbers 00 00 00 00            ; unused
+    NumberOfRelocations  00 00                  ; unused
+    NumberOfLinenumbers  00 00                  ; unused
+    Characteristics     20 00 00 60             ; code, executable, readable
+
+section header (data), starting at 0x160:
+    Name            2e 64 61 74 61 00 00 00     ; ".data"
+    VirtualSize         00 00 00 00             ; unused
+    VirtualAddress      c0 01 00 00             ; RVA to data section
+    SizeOfRawData       a0 00 00 00             ; size of data section
+    PointerToRawData    c0 01 00 00             ; file offset to data section
+    PointerToRelocations 00 00 00 00            ; unused
+    PointerToLinenumbers 00 00 00 00            ; unused
+    NumberOfRelocations  00 00                  ; unused
+    NumberOfLinenumbers  00 00                  ; unused
+    Characteristics     40 00 00 c0             ; initialized, readable, writeable
+
+(padding)
+    00 00 00 00 00 00       ; padding
+    00 00 00 00 00 00
+    00 00 00 00 00 00
+    00 00 00 00 00 00
+
+code section, starting at 0x1a0:
+    6A 00                    ; push      0x00000000
+    68 d0 01 10 00           ; push      offset _written
+    6A 0D                    ; push      0x0000000d
+    68 c0 01 10 00           ; push      offset hello_string
+    6A F5                    ; push      0xfffffff5
+    2E FF 15 28 02 10 00     ; call      dword ptr cs:__imp__GetStdHandle@4
+    50                       ; push      eax
+    2E FF 15 24 02 10 00     ; call      dword ptr cs:__imp__WriteConsoleA@20
+    C3                       ; ret       
+
+data section, beginning at 0x1c0:
+    68 65 6C 6C 6F 2C 20 77 6F 72 6C 64 0A  ; "hello, world\n"
+    00 00 00                                ; padding to align _written
+    00 00 00 00                             ; _written
+padding:
+    00 00 00 00 00 00 00 00 00 00 00 00     ; padding
+IMAGE_IMPORT_DESCRIPTOR, starting at 0x1e0:
+    OriginalFirstThunk      18 02 00 00     ; RVA to orig. 1st thunk
+    TimeDateStamp           00 00 00 00     ; unbound
+    ForwarderChain          ff ff ff ff     ; no forwarders
+    Name                    08 02 00 00     ; RVA to DLL name
+    FirstThunk              24 02 00 00     ; RVA to 1st thunk
+terminator (0x1f4):
+    OriginalFirstThunk      00 00 00 00     ; terminator
+    TimeDateStamp           00 00 00 00     ;
+    ForwarderChain          00 00 00 00     ;
+    Name                    00 00 00 00     ;
+    FirstThunk              00 00 00 00     ;
+The DLL name, at 0x208:
+    6b 65 72 6e 65 6c 33 32 2e 64 6c 6c 00  ; "kernel32.dll"
+    00 00 00                                ; padding to 32-bit-boundary
+original first thunk, starting at 0x218:
+    AddressOfData   30 02 00 00             ; RVA to function name "WriteConsoleA"
+    AddressOfData   40 02 00 00             ; RVA to function name "GetStdHandle"
+                    00 00 00 00             ; terminator
+first thunk, starting at 0x224:
+    AddressOfData   30 02 00 00             ; RVA to function name "WriteConsoleA"
+    AddressOfData   40 02 00 00             ; RVA to function name "GetStdHandle"
+                    00 00 00 00             ; terminator
+IMAGE_IMPORT_BY_NAME, at byte 0x230:
+    01 00                                      ; ordinal, need not be correct
+    57 72 69 74 65 43 6f 6e 73 6f 6c 65 41 00  ; "WriteConsoleA"
+IMAGE_IMPORT_BY_NAME, at byte 0x240:
+    02 00                                      ; ordinal, need not be correct
+    47 65 74 53 74 64 48 61 6e 64 6c 65 00     ; "GetStdHandle"
+(padding)
+    00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 ; padding
+    00
+First unused byte: 0x260

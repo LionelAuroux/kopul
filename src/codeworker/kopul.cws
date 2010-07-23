@@ -1,0 +1,34 @@
+/*
+  Script d'enchainement de kopul
+*/
+
+if ($lengthString(_ARGS[0]) == 0$)
+{
+  traceLine("USAGE: kopul file.kpl");
+  exit(1);
+}
+
+local sReadFile = _ARGS[0];
+local sOutput;
+local sExtension = rightString(_ARGS[0], 5);
+global sKopulPath = getEnv("KOPUL_PATH");
+
+if (sExtension == ".kpl")
+   sOutput = replaceString(sExtension, ".cpp", _ARGS[0]);
+else
+   sOutput = _ARGS[0] + ".cpp";
+traceLine("Analysing..." + sReadFile + " -> " + sOutput);
+// nommer la structure englobante
+insert project.readfile = sReadFile;
+// nom du rep de travail
+insert project.workdir = replaceString(".", "_", sReadFile);
+createDirectory(project.workdir);
+parseAsBNF(sKopulPath + "/kopul.cwp", project, _ARGS[0]);
+local treeFile = getWorkingPath() + _ARGS[0] + ".ktree";
+saveProject(treeFile, project);
+
+#include "kplBind.inc.cws"
+local out;
+kopulBind<"C">(project, out);
+saveProject(treeFile + ".out", out);
+

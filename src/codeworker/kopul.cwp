@@ -1,0 +1,180 @@
+/*
+  Language KOPUL version 3
+*/
+#include "kplNode.inc.cws"
+
+kopt ::= #ignore(C++)
+	=> global bitoffset;
+	=> pushItem bitoffset = 0;
+	=> insert this.block;
+	=> pushItem this.block;
+	=> insert this.block.variables["$"];
+	=> ref this.block.variables["$"] = this.block#back;
+	=> Kopt_initNode(this.block#back);
+	=> Kopt_initNodeStruct(this.block#back);
+	=> local fields;
+	=> Kopt_structGetFields(this.block#back, fields);
+	[
+	#pushItem(fields)
+	 field(fields#back)
+	]+
+	#continue #empty
+	=> removeVariable(bitoffset#back);
+;
+
+////////////////// COMMON RULE
+numeric ::= #readInteger
+; 
+
+identifiant ::= #!ignore ['a'..'z' | 'A'..'Z']['a'..'z' | 'A'..'Z' | '0'..'9']*
+;
+
+name ::= identifiant [#!ignore '.' identifiant]*
+;
+
+variable ::= '$' #continue name
+;
+
+#include "kopulBoolExpr.cwp"
+
+////////////////// STRUCT FIELD
+struct_field(theNode : node) ::=
+ "{" #continue
+	=> pushItem bitoffset = 0;
+	=> Kopt_initNodeStruct(theNode);
+	=> local fields;
+	=> Kopt_structGetFields(theNode, fields);
+	[
+	#pushItem(fields)
+	 field(fields#back)
+	]+
+ "}"
+	=> removeVariable(bitoffset#back);///
+;
+
+////////////////// ARRAY FIELD
+array_field(theNode : node) ::=
+ "[" #continue
+	=> Kopt_initNodeArray(theNode);
+	=> local afield;
+	=> Kopt_arrayGetField(theNode, afield);
+	field(afield)
+	"(" #continue
+	[
+	 numeric:num => Kopt_arraySetCounter(theNode, num);
+	 | variable:var => Kopt_arraySetVariableCounter(theNode, var);
+	 | => local expr;
+	 bool_expr(expr)
+	 => Kopt_arraySetExpression(theNode, expr);
+	]
+	")"
+ "]"
+;
+
+////////////////// SWITCH FIELD
+switch_field(theNode : node) ::=
+ "(" #continue
+	=> Kopt_initNodeSwitch(theNode);
+	=> local choice;
+	=> Kopt_switchGetChoice(theNode, choice);
+	[
+	=> local expr;
+	bool_expr(expr)
+	=> local afield;
+	field(afield)
+	=> Kopt_switchAddChoice(choice, expr, afield);
+	]+
+ ")"
+;
+
+////////////////// define FIELD
+literal_field(theNode : node) ::=
+	=> Kopt_initNodeLiteral(theNode);
+	[// TODO: forcer MAJUSCULE pour literal et minuscule pour type
+	 name:n '=' 
+	 [
+	  literal:v
+	  // => n isNotAType
+	  => Kopt_literalDefine(theNode, n, v);
+	  | numeric:num
+	  => Kopt_literalNumber(theNode, num);
+	  | #readCString:s
+	  => Kopt_literalString(theNode, s);
+	  | name:n
+	  // => n isADefine
+	  => Kopt_literalVariable(theNode, n);
+	  ]
+	 ]
+;
+
+////////////////// TYPE FIELD
+type_field(theNode : node) ::=
+	name:n '=' 
+	=> Kopt_initNodeType(theNode, n);
+	=> local afield;
+	=> Kopt_typeGetField(theNode, afield);
+	root_field(afield)
+;
+
+////////////////// DEREF
+padding ::=  "..." [':' name]?
+;
+
+deref(theNode : node) ::= [padding]? '*' '(' offset_expression ')' var_field(theNode)
+;
+
+////////////////// BITFIELD
+flags_endian(endian : node) ::= 
+"^" /* force en big endian */ => endian = "big";
+| "_" /* force en little endian */ => endian = "little";
+;
+
+flags_floattant(sign : node) ::= 
+"." /* indique que c'est un nombre floattant */ => sign = "float";
+;
+
+flags_sign(sign : node) ::=  
+"+" /* pour indiquer que c un nombre signe */ => sign = "signed";
+;
+
+flags(endian : node, sign : node) ::= 
+[
+	flags_endian(endian)
+	| flags_sign(sign) [ flags_endian(endian) ]?
+	|  flags_floattant(sign)
+]
+;
+
+bitfield(theNode : node) ::= 
+	=> local endian = "host";
+	=> local sign = "unsigned";
+	"#" [flags(endian, sign)]? numeric:bitdepth
+	=> Kopt_initNodeField(theNode, bitoffset#back, bitdepth, endian, sign);
+	=> bitoffset#back = $bitoffset#back + bitdepth$;
+;
+
+////////////////// MAIN
+root_field(theNode : node) ::=
+=> Kopt_initNode(theNode);
+	[
+	 bitfield(theNode)
+	 | struct_field(theNode)
+	 | array_field(theNode)
+	 | switch_field(theNode)
+	 | name //TODO: add read_somthing rules ... read a previous declared type or CONSTANT
+	]
+;
+
+var_field(theNode : node) ::=
+	root_field(theNode)
+	[
+	 ':' #continue name:n
+	 => Kopt_fieldSetName(theNode, n);
+	]?	  
+;
+
+field(theNode : node) ::=
+	type_field(theNode)
+	| literal_field(theNode)
+	| var_field(theNode)
+;

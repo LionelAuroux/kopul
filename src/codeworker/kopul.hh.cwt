@@ -1,0 +1,31 @@
+
+// TODO: a mettre dans .h
+typedef struct
+{
+
+}	_kopt_Stream;
+
+typedef struct
+{
+	unsigned int	bitsize;
+	void		*raw;
+}	_kopt_Bitfield;
+
+typedef unsigned char	u8;
+typedef char		s8;
+typedef unsigned short	u16;
+typedef short		s16;
+typedef unsigned long	u32;
+typedef long		s32;
+
+
+// primitive sur le stream
+static inline	
+u8	_kopt_r8(_kopt_Stream *_s)
+{}
+
+static inline	
+void	_kopt_w8(_kopt_Stream *_s, u8 _d)
+{}
+
+//
