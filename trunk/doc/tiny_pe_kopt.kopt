@@ -1,0 +1,105 @@
+// Problemes :
+// J'ai besoin de faire des declaration de constante.
+// J'ai besoin de definir des structures qui ne seront lue dans des
+// tableau.
+// -----------------------------
+
+// ICI je defini tout mes type :
+word=16
+long=32
+dword=32
+byte=8
+
+// typedef struct _IMAGE_DOS_HEADER		IMAGE_DOS_HEADER, *PIMAGE_DOS_HEADER;
+_IMAGE_DOS_HEADER = {					// DOS .EXE header
+	e4_magic#word						// Magic number
+    e_cblp#word   						// Bytes on last page of file
+    e_cp#word 							// Pages in file
+    e_crlc#word  						// Relocations
+    e_cparhdr#word  					// Size of header in paragraphs
+    e_minalloc#word  					// Minimum extra paragraphs needed
+    e_maxalloc#word  					// Maximum extra paragraphs needed
+    e_ss#word 							// Initial (relative) SS value
+    e_sp#word 							// Initial SP value
+    e_csum#word  						// Checksum
+    e_ip#word  							// Initial IP value
+    e_cs#word  							// Initial (relative) CS value
+    e_lfarlc#word  						// File address of relocation table
+    e_ovno#word  						// Overlay number
+    e_res[#word (4)]					// Reserved words
+    e_oemid#word  						// OEM identifier (for e_oeminfo)
+    e_oeminfo#word  					// OEM information; e_oemid specific
+    e_res2[#word (10)]					// Reserved words
+    e_lfanew#long  						// File address of new exe header
+} 
+
+// typedef struct _IMAGE_NT_HEADERS {
+*e_lfanew = {
+}
+    Signature#dword;
+    IMAGE_FILE_HEADER FileHeader;
+    IMAGE_OPTIONAL_HEADER32 OptionalHeader;
+} // IMAGE_NT_HEADERS32, *PIMAGE_NT_HEADERS32;
+
+// typedef struct _IMAGE_FILE_HEADER	IMAGE_FILE_HEADER, *PIMAGE_FILE_HEADER;
+*FileHeader =
+{
+	Machine#word
+	NumberOfSections#word
+	TimeDateStamp#dword
+	PointerToSymbolTable#dword
+	NumberOfSymbols#dword
+	SizeOfOptionalHeader#word
+	Characteristics#word
+}
+
+// typedef struct _IMAGE_OPTIONAL_HEADER	IMAGE_OPTIONAL_HEADER32, *PIMAGE_OPTIONAL_HEADER32;
+*OptionalHeader =
+{
+	//
+	// Standard fields.
+	//
+	Magic#word
+	MajorLinkerVersion#byte
+	MinorLinkerVersion#byte
+	SizeOfCode#dword
+	SizeOfInitializedData#dword
+	SizeOfUninitializedData#dword
+	AddressOfEntryPoint#dword
+	BaseOfCode#dword
+	BaseOfData#dword
+
+	//
+	// NT additional fields.
+	//
+	ImageBase#dword
+	SectionAlignment#dword
+	FileAlignment#dword
+	MajorOperatingSystemVersion#word
+	MinorOperatingSystemVersion#word
+	MajorImageVersion#word
+	MinorImageVersion#word
+	MajorSubsystemVersion#word
+	MinorSubsystemVersion#word
+	Win32VersionValue#dword
+	SizeOfImage#dword
+	SizeOfHeaders#dword
+	CheckSum#dword
+	Subsystem#word
+	DllCharacteristics#word
+	SizeOfStackReserve#dword
+	SizeOfStackCommit#dword
+	SizeOfHeapReserve#dword
+	SizeOfHeapCommit#dword
+	LoaderFlags#dword
+	NumberOfRvaAndSizes#dword
+	// Oula c'est louche la.
+	IMAGE_DATA_DIRECTORY DataDirectory[IMAGE_NUMBEROF_DIRECTORY_ENTRIES]
+}
+
+// typedef struct _IMAGE_DATA_DIRECTORY		IMAGE_DATA_DIRECTORY, *PIMAGE_DATA_DIRECTORY;
+*DataDirectory =
+{
+    VirtualAddress#dword
+    Size#dword
+} 

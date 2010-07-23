@@ -1,0 +1,52 @@
+/*
+  Grammaire des expressions booleenes KOPT
+*/
+
+bool_expr(expr : node) ::= "?" =>traceLine("!!!"); 
+#continue [logical_and_exp ["||" logical_and_exp]*]?
+;
+
+logical_and_exp ::= incl_or_exp #continue ["&&" incl_or_exp]*
+;
+
+incl_or_exp ::= exclu_or_exp #continue ["|" #!ignore !"|" exclu_or_exp]*
+;
+
+exclu_or_exp ::= and_exp #continue ["^" and_exp]*
+;
+
+and_exp ::= equal_exp #continue ["&" #!ignore !"&" equal_exp]*
+;
+
+equal_exp ::= [relat_exp #continue [["=="|"!="] relat_exp]*]
+	  | [["=="|"!="] #continue relat_exp]
+;
+
+relat_exp ::= shift_exp #continue [["<=" | ">=" | "<" | ">"] shift_exp]*
+	  | ["<=" | ">=" | "<" | ">"] shift_exp
+;
+
+shift_exp ::= atom #continue [["<<"|">>"] atom]*
+;
+
+atom ::= 
+	variable:sVar => traceLine("var:" + sVar); 
+	| literal
+;
+
+literal ::= [
+	#readInteger
+	| hex
+	| binary
+	| #readNumeric
+	| [#readCString]+
+	| #readCChar 
+	]:literal
+	=> traceLine("literal " + literal);
+;
+
+hex ::= '0' ['x'|'X'] [#readInteger | 'a'..'f'|'A'..'F']+
+;
+
+binary ::= ['0'..'1']+ ['b'|'B']
+;

@@ -1,0 +1,33 @@
+/*
+	Fichier de test en KOPT
+*/
+
+// exemple de type de base 
+#1 #^2 #_3 #+8 #+^32 #64 #.64
+
+// ainsi la description d'une chaine de caractere type Pascal peut s'ecrire  ainsi 
+PascalString={#8:size [#8 ($size)]}
+
+// on peut lire une structure mais extraire seulement le 5bit qui vont bien 
+{#14:pad1 #5:flags #5:pad2}:decode
+
+[#8:c (20)]
+
+// chaine de caractere en C 
+CString=[#8:c ($c)]
+CString2=[#8:c (?)]
+
+user={PascalString:Nom PascalString:Prenom}
+
+#8:c (
+	?$c==1  [#8:c ($c)]
+	?$c==2  #.64
+	?$c==4  user
+	?$c==8 {
+		#128:magic
+		#2:flagsFoo
+		#5:flagsBar
+		#1:flagsPad
+		(?$flagsBar&2==1 [[#8 (10)] (?$flagsFoo)])
+	}
+)

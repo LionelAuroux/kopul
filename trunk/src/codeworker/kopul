@@ -1,0 +1,2 @@
+#!/bin/sh
+codeworker -nologo -script ${KOPT_PATH:?Vous devez configurer KPL_PATH dans votre environement}/kopul.cws -args $*
