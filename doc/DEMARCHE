@@ -1,0 +1,96 @@
+pour simplifier le dev :
+
+- on commence par le mode memoire
+- on commence par generer une lib encodage/decodage (JIT apres)
+- on affinera les prototypes des fonctions de l' API C au fur a mesure
+
+
+comment traduire le graphe des instances de classe de la lib KPLC++ en llvm:
+
+== chaque type sera traduit en 2 fonction : 1 encodage, 1 decodage
+
+ex:
+
+user={pascalString->nom pascalString->prenom}
+
+devrais generer 2 fonction en llvm
+
+define i32  kpl_read_user()
+{}
+
+define i32  kpl_write_user()
+{}
+
+== les expressions libres seront rattaché a un type par defaut nomme __root__
+
+ex:
+
+#8->count [#8 ($count)]
+
+devrais generer 2 fonction en llvm
+
+define i32  kpl_read___root__()
+{
+ // lit #8
+ // affecte dans count
+ // genere la boucle etc...
+}
+
+define i32  kpl_write___root__()
+{
+  // lit count
+  // ecrit count en #8
+  // genere boucle etc...
+}
+
+== voir cast pour extraction dans le flux des bitfields
+
+// #i24 #32
+define i32  kpl_read___root__(i8* stream)
+{
+	// lire un i24 dans i8*
+	// lire un i32 dans i8*
+}
+
+
+== encodage tableau statique
+
+utilisé les tableaus llvm directement ! ne pas generer une boucle
+
+== encodage tableaus dynamique
+
+generer une boucle en llvm
+
+== capture de variable
+
+#8->count [#8 ($count)]
+
+objectif generer:
+
+define i32  kpl_read___root__(i8* stream)
+{
+	//extraction d'un i8 dans %count
+	%count = load i8* ...
+        // deplacement dans le stream
+
+	_LBegin:
+	%tmp = load i8 * ...
+        // deplacement dans le stream
+	// decrois %count
+	dec %count
+	%test = icmp eq i32 %count, 0
+	br il %test, label %_LEd, label %_LBegin
+	_LEnd: 
+}
+
+== faire un namespace kpl
+
+== rajouter un objet facade pour referencer tout le reste
+
+registerType va stocker le nom de chaque struct (type) dans une map (nom unique), mais aussi dans une liste ordonne (gestion de la dependance).
+Quand on instanciera un struct, le struct s'enregistrera dans registerType.
+la map permettra de controller l'unicite des noms (exception si echec a l'insertion).
+On instanciera par ordre de dependence.
+
+Lorsqu'on veut generer la lib d'encode/decode il suffira d'iterer la liste de registerType et d'appeler les 
+fonctions idoines.
