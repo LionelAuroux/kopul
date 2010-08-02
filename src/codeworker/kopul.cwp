@@ -10,10 +10,10 @@ kopt ::= #ignore(C++)
 	=> pushItem this.block;
 	=> insert this.block.variables["$"];
 	=> ref this.block.variables["$"] = this.block#back;
-	=> Kopt_initNode(this.block#back);
-	=> Kopt_initNodeStruct(this.block#back);
+	=> Kpl_initNode(this.block#back);
+	=> Kpl_initNodeStruct(this.block#back);
 	=> local fields;
-	=> Kopt_structGetFields(this.block#back, fields);
+	=> Kpl_structGetFields(this.block#back, fields);
 	[
 	#pushItem(fields)
 	 field(fields#back)
@@ -41,9 +41,9 @@ variable ::= '$' #continue name
 struct_field(theNode : node) ::=
  "{" #continue
 	=> pushItem bitoffset = 0;
-	=> Kopt_initNodeStruct(theNode);
+	=> Kpl_initNodeStruct(theNode);
 	=> local fields;
-	=> Kopt_structGetFields(theNode, fields);
+	=> Kpl_structGetFields(theNode, fields);
 	[
 	#pushItem(fields)
 	 field(fields#back)
@@ -55,17 +55,17 @@ struct_field(theNode : node) ::=
 ////////////////// ARRAY FIELD
 array_field(theNode : node) ::=
  "[" #continue
-	=> Kopt_initNodeArray(theNode);
+	=> Kpl_initNodeArray(theNode);
 	=> local afield;
-	=> Kopt_arrayGetField(theNode, afield);
+	=> Kpl_arrayGetField(theNode, afield);
 	field(afield)
 	"(" #continue
 	[
-	 numeric:num => Kopt_arraySetCounter(theNode, num);
-	 | variable:var => Kopt_arraySetVariableCounter(theNode, var);
+	 numeric:num => Kpl_arraySetCounter(theNode, num);
+	 | variable:var => Kpl_arraySetVariableCounter(theNode, var);
 	 | => local expr;
 	 bool_expr(expr)
-	 => Kopt_arraySetExpression(theNode, expr);
+	 => Kpl_arraySetExpression(theNode, expr);
 	]
 	")"
  "]"
@@ -74,35 +74,35 @@ array_field(theNode : node) ::=
 ////////////////// SWITCH FIELD
 switch_field(theNode : node) ::=
  "(" #continue
-	=> Kopt_initNodeSwitch(theNode);
+	=> Kpl_initNodeSwitch(theNode);
 	=> local choice;
-	=> Kopt_switchGetChoice(theNode, choice);
+	=> Kpl_switchGetChoice(theNode, choice);
 	[
 	=> local expr;
 	bool_expr(expr)
 	=> local afield;
 	field(afield)
-	=> Kopt_switchAddChoice(choice, expr, afield);
+	=> Kpl_switchAddChoice(choice, expr, afield);
 	]+
  ")"
 ;
 
 ////////////////// define FIELD
 literal_field(theNode : node) ::=
-	=> Kopt_initNodeLiteral(theNode);
+	=> Kpl_initNodeLiteral(theNode);
 	[// TODO: forcer MAJUSCULE pour literal et minuscule pour type
 	 name:n '=' 
 	 [
 	  literal:v
 	  // => n isNotAType
-	  => Kopt_literalDefine(theNode, n, v);
+	  => Kpl_literalDefine(theNode, n, v);
 	  | numeric:num
-	  => Kopt_literalNumber(theNode, num);
+	  => Kpl_literalNumber(theNode, num);
 	  | #readCString:s
-	  => Kopt_literalString(theNode, s);
+	  => Kpl_literalString(theNode, s);
 	  | name:n
 	  // => n isADefine
-	  => Kopt_literalVariable(theNode, n);
+	  => Kpl_literalVariable(theNode, n);
 	  ]
 	 ]
 ;
@@ -110,9 +110,9 @@ literal_field(theNode : node) ::=
 ////////////////// TYPE FIELD
 type_field(theNode : node) ::=
 	name:n '=' 
-	=> Kopt_initNodeType(theNode, n);
+	=> Kpl_initNodeType(theNode, n);
 	=> local afield;
-	=> Kopt_typeGetField(theNode, afield);
+	=> Kpl_typeGetField(theNode, afield);
 	root_field(afield)
 ;
 
@@ -149,13 +149,13 @@ bitfield(theNode : node) ::=
 	=> local endian = "host";
 	=> local sign = "unsigned";
 	"#" [flags(endian, sign)]? numeric:bitdepth
-	=> Kopt_initNodeField(theNode, bitoffset#back, bitdepth, endian, sign);
+	=> Kpl_initNodeField(theNode, bitoffset#back, bitdepth, endian, sign);
 	=> bitoffset#back = $bitoffset#back + bitdepth$;
 ;
 
 ////////////////// MAIN
 root_field(theNode : node) ::=
-=> Kopt_initNode(theNode);
+=> Kpl_initNode(theNode);
 	[
 	 bitfield(theNode)
 	 | struct_field(theNode)
@@ -168,8 +168,8 @@ root_field(theNode : node) ::=
 var_field(theNode : node) ::=
 	root_field(theNode)
 	[
-	 ':' #continue name:n
-	 => Kopt_fieldSetName(theNode, n);
+	 "->" #continue name:n
+	 => Kpl_fieldSetName(theNode, n);
 	]?	  
 ;
 

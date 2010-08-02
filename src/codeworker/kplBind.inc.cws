@@ -1,53 +1,59 @@
 /*
-	Binding C API de kopt v0.1
+	Binding C++ API de kpl v0.1
 */
-declare function	koptBindC<T>(theNode : node, out_tree : node);
-declare function	koptBind<T>(theNode : node, out_tree : node);
+#if !existFunction(kplBind)
 
-function	koptBindC<T>(theNode : node, out_tree : node)
+#include "kplNode.inc.cws"
+
+declare function	kplBindCXX<T>(theNode : node, out_tree : node);
+declare function	kplBind<T>(theNode : node, out_tree : node);
+
+function	kplBindCXX<T>(theNode : node, out_tree : node)
 {
 	pushItem out_tree = T + " NOT IMPLEMENTED";
 	traceLine(out_tree#back);
 }
 
-function	koptBindC<"scalar">(theNode : node, out_tree : node)
+function	kplBindCXX<"scalar">(theNode : node, out_tree : node)
 {
   traceLine("COOL");
 
 }
 
-function	koptBindC<"struct">(theNode : node, out_tree : node)
-{
-  traceLine("COOL");
-  foreach field in theNode.fields
-  {
-    koptBindC<field.type>(field, out_tree);
-  }
-}
-
-function	koptBindC<"type">(theNode : node, out_tree : node)
+function	kplBindCXX<"struct">(theNode : node, out_tree : node)
 {
   traceLine("COOL");
   foreach field in theNode.fields
   {
-    koptBindC<field.type>(field, out_tree);
+    kplBindCXX<field.type>(field, out_tree);
+  }
+}
+
+function	kplBindCXX<"type">(theNode : node, out_tree : node)
+{
+  traceLine("COOL");
+  foreach field in theNode.fields
+  {
+    kplBindCXX<field.type>(field, out_tree);
   }
 }
 
 
-function	koptBind<T>(theNode : node, out_tree : node)
+function	kplBind<T>(theNode : node, out_tree : node)
 {
   traceLine("LANGUAGE " + T + " not supported");
 }
 
-function	koptBind<"C">(theNode : node, out_tree : node)
+function	kplBind<"CXX">(theNode : node, out_tree : node)
 {
-	local	sStr = "//translated to C\n";
+	local	sStr = "//translated to CXX\n";
 	traceObject(theNode);
-	Kopt_initOutNode(out_tree);
+	Kpl_initOutNode(out_tree);
 	foreach oNode in theNode.block
 	{
-		sStr += koptBindC<oNode.type>(oNode, out_tree);
+		sStr += kplBindCXX<oNode.type>(oNode, out_tree);
 	}
 	return sStr;
 }
+
+#end

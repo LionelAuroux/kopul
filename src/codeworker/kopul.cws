@@ -11,7 +11,7 @@ if ($lengthString(_ARGS[0]) == 0$)
 local sReadFile = _ARGS[0];
 local sOutput;
 local sExtension = rightString(_ARGS[0], 5);
-global sKopulPath = getEnv("KOPUL_PATH");
+global sKopulPath = getEnv("KPL_PATH");
 
 if (sExtension == ".kpl")
    sOutput = replaceString(sExtension, ".cpp", _ARGS[0]);
@@ -29,6 +29,6 @@ saveProject(treeFile, project);
 
 #include "kplBind.inc.cws"
 local out;
-kopulBind<"C">(project, out);
+kplBind<"CXX">(project, out);
 saveProject(treeFile + ".out", out);
 

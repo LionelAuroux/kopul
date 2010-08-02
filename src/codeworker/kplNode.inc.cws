@@ -1,9 +1,10 @@
 /*
-  fonctions de creation de node pour kopt
+  fonctions de creation de node pour kpl
 */
+#if !existFunction(Kpl_initNode)
 
 // cree un node de base
-function	Kopt_initNode(theNode : node)
+function	Kpl_initNode(theNode : node)
 {
   /*
     type peut etre:
@@ -16,30 +17,30 @@ function	Kopt_initNode(theNode : node)
 }
 
 // un literal
-function	Kopt_initNodeLiteral(theNode : node)
+function	Kpl_initNodeLiteral(theNode : node)
 {
   insert theNode.type = "literal";
 }
 
-function	Kopt_literalString(theNode : node, string : node)
+function	Kpl_literalString(theNode : node, string : node)
 {
   insert theNode.literal = "string";
   insert theNode.value = string;
 }
 
-function	Kopt_literalNumber(theNode : node, num : node)
+function	Kpl_literalNumber(theNode : node, num : node)
 {
   insert theNode.literal = "number";
   insert theNode.value = num;
 }
 
-function	Kopt_literalVariable(theNode : node, varname : node)
+function	Kpl_literalVariable(theNode : node, varname : node)
 {
   insert theNode.literal = "variable";
   insert theNode.value = varname;
 }
 
-function	Kopt_literalDefine(theNode : node, varname : node, value : node)
+function	Kpl_literalDefine(theNode : node, varname : node, value : node)
 {
   insert theNode.literal = "define";
   insert theNode.name = varname;
@@ -47,20 +48,20 @@ function	Kopt_literalDefine(theNode : node, varname : node, value : node)
 }
 
 // cree un node type switch: (? )
-function	Kopt_initNodeSwitch(theNode : node)
+function	Kpl_initNodeSwitch(theNode : node)
 {
   insert theNode.type = "switch";
   insert theNode.choices;
 }
 
 // getter de la partie choice d'un switch
-function	Kopt_switchGetChoice(theNode : node, out_ref : reference)
+function	Kpl_switchGetChoice(theNode : node, out_ref : reference)
 {
   ref	out_ref = theNode.choices;
 }
 
 // add a choice
-function	Kopt_switchAddChoice(local_choice : reference, expr : node, field : node)
+function	Kpl_switchAddChoice(local_choice : reference, expr : node, field : node)
 {
   pushItem local_choice;
   insert local_choice#back.expr = expr;
@@ -68,7 +69,7 @@ function	Kopt_switchAddChoice(local_choice : reference, expr : node, field : nod
 }
 
 // cree un node type array: []
-function	Kopt_initNodeArray(theNode : node)
+function	Kpl_initNodeArray(theNode : node)
 {
   insert theNode.type = "array";
   insert theNode.field;
@@ -78,31 +79,31 @@ function	Kopt_initNodeArray(theNode : node)
 }
 
 // setter le nombre d'iteration 
-function	Kopt_arraySetCounter(theNode : node, nCount : node)
+function	Kpl_arraySetCounter(theNode : node, nCount : node)
 {
   insert theNode.count = nCount;
 }
 
 // setter le nombre d'iteration par une variable
-function	Kopt_arraySetVariableCounter(theNode : node, nCountName : node)
+function	Kpl_arraySetVariableCounter(theNode : node, nCountName : node)
 {
   insert theNode.variable = nCountName;
 }
 
 // setter le nombre d'iteration par une expression booleene
-function	Kopt_arraySetExpression(theNode : node, expr : node)
+function	Kpl_arraySetExpression(theNode : node, expr : node)
 {
   insert theNode.expr = expr;
 }
 
 // getter de la partie field d'un type array
-function	Kopt_arrayGetField(theNode : node, out_ref : reference)
+function	Kpl_arrayGetField(theNode : node, out_ref : reference)
 {
   ref	out_ref = theNode.field;
 }
 
 // cree un node type struct: {}
-function	Kopt_initNodeStruct(theNode : node)
+function	Kpl_initNodeStruct(theNode : node)
 {
   insert theNode.type = "struct";
   insert theNode.fields;
@@ -112,13 +113,13 @@ function	Kopt_initNodeStruct(theNode : node)
 }
 
 // getter de la partie fields d'un type struct
-function	Kopt_structGetFields(theNode : node, out_ref : reference)
+function	Kpl_structGetFields(theNode : node, out_ref : reference)
 {
   ref	out_ref = theNode.fields;
 }
 
 // cree un node type: a=b
-function	Kopt_initNodeType(theNode : node, name : node)
+function	Kpl_initNodeType(theNode : node, name : node)
 {
   insert theNode.type = "type";
   insert theNode.name = name;
@@ -126,13 +127,13 @@ function	Kopt_initNodeType(theNode : node, name : node)
 }
 
 // getter de la partie field d'un type
-function	Kopt_typeGetField(theNode : node, out_ref : reference)
+function	Kpl_typeGetField(theNode : node, out_ref : reference)
 {
   ref	out_ref = theNode.field;
 }
 
 // fonction interne
-function	_Kopt_calcBeginMask(bitoffset : value)
+function	_Kpl_calcBeginMask(bitoffset : value)
 {
   local mask = "";
   local i = 0;
@@ -151,7 +152,7 @@ function	_Kopt_calcBeginMask(bitoffset : value)
   return mask;
 }
 
-function	_Kopt_calcEndMask(bitoffset : value)
+function	_Kpl_calcEndMask(bitoffset : value)
 {
   local mask = "";
   local i = 0;
@@ -170,7 +171,7 @@ function	_Kopt_calcEndMask(bitoffset : value)
   return mask;
 }
 
-function	_Kopt_calcMaskAsNum(maskStr : value)
+function	_Kpl_calcMaskAsNum(maskStr : value)
 {
   local len = lengthString(maskStr);
   local pow = pow(2, ($len - 1$));
@@ -188,7 +189,7 @@ function	_Kopt_calcMaskAsNum(maskStr : value)
 }
 
 // gestion d'un field de type #
-function	Kopt_initNodeField(theNode : node, bitoffset : value, bitdepth : value, endian : value, sign : value)
+function	Kpl_initNodeField(theNode : node, bitoffset : value, bitdepth : value, endian : value, sign : value)
 {
   // type de node
   insert theNode.type = "scalar";
@@ -202,8 +203,8 @@ function	Kopt_initNodeField(theNode : node, bitoffset : value, bitdepth : value,
   // sers aussi pour le decalage de bit lors de la conversion
   insert theNode.field.bitoffset = $bitoffset % 8$;
   // calcul du mask de debut
-  insert	theNode.field.beginMask = _Kopt_calcBeginMask(theNode.field.bitoffset);
-  insert	theNode.field.beginMaskNum = _Kopt_calcMaskAsNum(theNode.field.beginMask);
+  insert	theNode.field.beginMask = _Kpl_calcBeginMask(theNode.field.bitoffset);
+  insert	theNode.field.beginMaskNum = _Kpl_calcMaskAsNum(theNode.field.beginMask);
   // cartographie des octets
   local rest = 0;
   local num32 = floor($bitdepth / 32$);
@@ -217,8 +218,8 @@ function	Kopt_initNodeField(theNode : node, bitoffset : value, bitdepth : value,
   insert	theNode.field.field8 = num8;
   insert	theNode.field.fieldX = $rest + theNode.field.bitoffset$;
   // calcul du mask de fin
-  insert	theNode.field.endMask = _Kopt_calcEndMask(theNode.field.fieldX);
-  insert	theNode.field.endMaskNum = _Kopt_calcMaskAsNum(theNode.field.endMask);
+  insert	theNode.field.endMask = _Kpl_calcEndMask(theNode.field.fieldX);
+  insert	theNode.field.endMaskNum = _Kpl_calcMaskAsNum(theNode.field.endMask);
   // calcul du flag pour savoir si le dernier byte est partage avec le field suivant
   insert	theNode.field.shareLastByte = "no";
   if ($(theNode.field.fieldX % 8) > 0$)
@@ -234,7 +235,7 @@ function	Kopt_initNodeField(theNode : node, bitoffset : value, bitdepth : value,
 }
 
 // nomme un field et donc cree une variable
-function	Kopt_fieldSetName(theNode : node, name : node)
+function	Kpl_fieldSetName(theNode : node, name : node)
 {
   insert	theNode.name = name;
 }
@@ -242,21 +243,23 @@ function	Kopt_fieldSetName(theNode : node, name : node)
 ///////////////////////
 
 // fonction de sortie
-function	Kopt_initOutNode(theNode : node)
+function	Kpl_initOutNode(theNode : node)
 {
   insert	theNode.block;
   insert	theNode.block.files;
 }
 
-function	Kopt_OutNodeGetNewItem(theNode : node, out_ref : reference)
+function	Kpl_OutNodeGetNewItem(theNode : node, out_ref : reference)
 {
   pushItem	theNode.block;
   ref		out_ref = theNode.block#back;
 }
 
-function	Kopt_OutNodeNewFile(theNode : node, name : value, out_ref : reference)
+function	Kpl_OutNodeNewFile(theNode : node, name : value, out_ref : reference)
 {
   pushItem	theNode.block;
   ref		out_ref = theNode.block#back;
   ref		theNode.block.files[name] = theNode.block#back;
 }
+
+#end
