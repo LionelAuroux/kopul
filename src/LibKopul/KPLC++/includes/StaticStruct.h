@@ -7,13 +7,9 @@
 
 namespace kpl
 {
-	class	Struct : public Type
+	class	StaticStruct : public Type
 	{
-		std::string		_name; //optionnel
 		std::vector<Type>	_listType;
-	protected:
-		int			buildEncodeFunction(llvm::Function *);
-		int			buildDecodeFunction(llvm::Function *);
 	public:
 	};
 };

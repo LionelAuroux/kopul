@@ -1,10 +1,10 @@
 GPP		=	g++
 NAME		=	test
-SRC		=	test1.cpp
+SRC		=	srcs/test1.cpp
 OBJ		=	$(SRC:.cpp=.o)
 RM		=	rm -f
-INCFLAGS	=	-I../includes
-LFLAGS		=	-L../ -lkopul `llvm-config --ldflags --libs `
+INCFLAGS	=	-I../KPLC++/includes
+LFLAGS		=	-L../KPLC++/ -lkopul `llvm-config --ldflags --libs `
 CPPFLAGS	= 	-W -Wall `llvm-config --cxxflags` $(INCFLAGS) $(LFLAGS)
 CMD		=	$(GPP) -o $(NAME) $(OBJ) $(LFLAGS)
 
@@ -17,7 +17,7 @@ obj:
 		$(GPP) $(CPPFLAGS) -o $@-c $<
 
 clean:
-		$(RM) *.o *~
+		$(RM) srcs/*.o srcs/*~
 
 fclean: clean 
 	$(RM) $(NAME)
@@ -25,4 +25,4 @@ fclean: clean
 re:	fclean all
 
 go:	
-	cd .. && make && cd - && make re && ./test
+	cd ../KPLC++/ && make && cd - && make re && ./test
