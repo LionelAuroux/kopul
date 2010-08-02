@@ -10,6 +10,8 @@ namespace kpl
 		int			buildEncodeFunction(llvm::Function *);
 		int			buildDecodeFunction(llvm::Function *);
 	public:
+            DynamicArray(const Type& type);
+            friend class Type;
 	};
 };
 

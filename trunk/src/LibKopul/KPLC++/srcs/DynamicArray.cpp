@@ -2,6 +2,11 @@
 
 using namespace kpl;
 
+DynamicArray::DynamicArray(const Type& type)
+{
+    _type = llvm::PointerType::getUnqual(type.GetLLVMType());
+}
+
 int			DynamicArray::buildEncodeFunction(llvm::Function *)
 {
 	std::cout << "build function encode de DYNAMICARRAY" << std::endl;

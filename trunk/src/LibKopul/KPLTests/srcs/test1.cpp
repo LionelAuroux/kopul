@@ -14,11 +14,11 @@ int main()
 	Module 		*mod = new Module("test", getGlobalContext());
 	Bitfield	bit(1);
 
-	bit.setName("i1");
-	bit.buildFunctions(mod);
-	bit.setName("i7");
-	bit.setSize(7);
-	bit.buildFunctions(mod);
+	bit.SetName("i1");
+	bit.BuildFunctions(mod, MEMORY_MODE);
+	bit.SetName("i7");
+	bit.SetSize(7);
+	bit.BuildFunctions(mod, MEMORY_MODE);
 	mod->dump();
 	return (0);
 }

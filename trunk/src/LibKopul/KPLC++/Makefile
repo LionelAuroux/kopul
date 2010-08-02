@@ -8,7 +8,8 @@ SRC		=	srcs/Type.cpp			\
 			srcs/StaticArray.cpp		\
 			srcs/DynamicArray.cpp		\
 			srcs/Switch.cpp			\
-			srcs/Struct.cpp			\
+			srcs/StaticStruct.cpp		\
+			srcs/StaticType.cpp		\
 			srcs/Expression.cpp		\
 			srcs/ExpressionBuilder.cpp
 OBJDIR		=	objs
