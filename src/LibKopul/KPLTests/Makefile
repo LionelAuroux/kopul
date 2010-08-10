@@ -25,4 +25,4 @@ fclean: clean
 re:	fclean all
 
 go:	
-	cd ../KPLC++/ && make && cd - && make re && ./test
+	cd ../KPLC++/ && make re && cd - && make re && ./test

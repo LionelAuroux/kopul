@@ -3,14 +3,44 @@
 # include <string>
 # include <vector>
 
-# include "Type.h"
+# include "StaticType.h"
 
 namespace kpl
 {
-	class	StaticStruct : public Type
+	class	StaticStruct : public StaticType
 	{
-		std::vector<Type>	_listType;
 	public:
+            StaticStruct();
+            StaticStruct(const StaticStruct&);
+            ~StaticStruct();
+            StaticStruct&                     operator = (const StaticStruct&);
+            const std::vector<StaticType *>&  GetListType() const;
+            int                               GetSize() const;
+            void                              Add(const StaticType&);
+            void                              Add(const StaticType*);
+            friend StaticStruct&              operator << (StaticStruct&, const StaticType&);
+            friend StaticStruct&              operator << (StaticStruct&, const StaticType*);
+            void                              Clear ();
+
+            // Get a string representation of the object
+            const std::string&                ToString() const;
+
+            // Get the type of the object
+            const std::string&                GetType() const;
+
+            // returns true if the given type and content are equal.
+            bool                              Equals(const IObject &value) const;
+
+            // create a new instance by making a deep copy of the current object data
+            IObject*                          Clone() const;
+
+        protected:
+            const llvm::Type*                 GetLLVMType() const;
+
+        private:
+            std::vector<StaticType *>         _listType;
+            std::string                       _objectToStr;
+            std::string                       _objectType;
 	};
 };
 

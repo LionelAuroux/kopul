@@ -8,7 +8,6 @@ using namespace kpl;
 
 Type::Type()
 {
-    _type = NULL;
     _modeMap[MEMORY_MODE] = std::pair<BUILDER_MODE, BUILDER_MODE>(ENCODE_TO_MEMORY, DECODE_FROM_MEMORY);
     _modeMap[FILE_MODE] = std::pair<BUILDER_MODE, BUILDER_MODE>(ENCODE_TO_FILE, DECODE_FROM_FILE);
     _modeMap[SOCKET_MODE] = std::pair<BUILDER_MODE, BUILDER_MODE>(ENCODE_TO_SOCKET, DECODE_FROM_SOCKET);
@@ -38,35 +37,30 @@ void				Type::SetName(const std::string& name)
 	this->_name = name;
 }
 
-const llvm::Type*               Type::GetLLVMType() const
-{
-    return (this->_type);
-}
-
-llvm::Function*			Type::CreateFunctionForMemory(llvm::Module *module, const std::string &name) const
+llvm::Function*			Type::CreateFunctionForMemory(llvm::Module *module, const std::string &name, const std::map<std::string, const llvm::Type*>& mapVariable) const
 {
     std::vector<const llvm::Type*>	listParamProto;
 
-    if (this->_type == NULL)
-	throw (std::logic_error("Type not initialized"));
-    // Generation d'un pointeur de pointeur sur le type
-    llvm::PointerType *ptr_type = llvm::PointerType::getUnqual(this->_type);
-    llvm::PointerType *ptr_ptr_type = llvm::PointerType::getUnqual(ptr_type);
-    listParamProto.push_back(ptr_ptr_type);
-    listParamProto.push_back(ptr_type);
-    for (std::vector<const llvm::Type*>::const_iterator it = this->_listVariable.begin(); it != this->_listVariable.end(); it++)
-    	listParamProto.push_back(*it);
+    // Generation d'un pointeur de pointeur sur la stream (i8**)
+    llvm::PointerType *ptr_stream = llvm::PointerType::getUnqual(llvm::Type::getInt8Ty(llvm::getGlobalContext()));
+    llvm::PointerType *ptr_ptr_stream = llvm::PointerType::getUnqual(ptr_stream);
+    listParamProto.push_back(ptr_ptr_stream);
+
+    for (std::map<std::string, const llvm::Type*>::const_iterator it = mapVariable.begin(); it != mapVariable.end(); ++it)
+    	listParamProto.push_back(it->second);
+
     // cree un fonction type du prototype
     llvm::FunctionType *ft = llvm::FunctionType::get(llvm::Type::getInt32Ty(llvm::getGlobalContext()), listParamProto, false);
 
     // creation de la fonction dans le module
     llvm::Function *newFunction = llvm::Function::Create(ft, llvm::Function::ExternalLinkage, name.c_str(), module);
-
     // donne un nom au premiere argument qui est la stream et au deuxieme qui est le param.
     llvm::Function::arg_iterator	alist = newFunction->arg_begin();
-    alist->setName("streamAdr");
-    alist++;
-    alist->setName("paramAdr");
+    alist->setName("i8StreamAdr");
+    ++alist;
+    for (std::map<std::string, const llvm::Type*>::const_iterator it = mapVariable.begin(); it != mapVariable.end(); ++it, ++alist)
+    	alist->setName(it->first);
+
 
   	/*
 		creation: du block d'entree (entry) de la function,
@@ -78,16 +72,16 @@ llvm::Function*			Type::CreateFunctionForMemory(llvm::Module *module, const std:
     llvm::BasicBlock *actionBlock = llvm::BasicBlock::Create(llvm::getGlobalContext(), "action", newFunction);
     llvm::BasicBlock *errorBlock = llvm::BasicBlock::Create(llvm::getGlobalContext(), "error", newFunction);
     builder.SetInsertPoint(entryBlock);
-    builder.CreateLoad(newFunction->getValueSymbolTable().lookup("streamAdr"), "stream");
-    builder.CreateLoad(newFunction->getValueSymbolTable().lookup("streamAdr"), "streamAdrBackUp");
+//    builder.CreateBitCast(newFunction->getValueSymbolTable().lookup("i8StreamAdr"), llvm::PointerType::getUnqual(ptr_stream), "streamAdr");
+    builder.CreateLoad(newFunction->getValueSymbolTable().lookup("i8StreamAdr"), "streamAdrBackUp");
     builder.CreateBr(actionBlock);
     builder.SetInsertPoint(errorBlock);
-    builder.CreateStore(newFunction->getValueSymbolTable().lookup("streamAdrBackUp"), newFunction->getValueSymbolTable().lookup("streamAdr"));
+    builder.CreateStore(newFunction->getValueSymbolTable().lookup("streamAdrBackUp"), newFunction->getValueSymbolTable().lookup("i8StreamAdr"));
     builder.CreateRet(llvm::ConstantInt::get(llvm::getGlobalContext(), llvm::APInt(32, -1, false)));
     return (newFunction);
 }
 
-llvm::Function*			Type::CreateFunctionForFile(llvm::Module *module, const std::string &name) const
+llvm::Function*			Type::CreateFunctionForFile(llvm::Module *module, const std::string &name, const std::map<std::string, const llvm::Type*>& mapVariable) const
 {
 /*
  * TODO
@@ -95,7 +89,7 @@ llvm::Function*			Type::CreateFunctionForFile(llvm::Module *module, const std::s
     return (NULL);
 }
 
-llvm::Function*			Type::CreateFunctionForSocket(llvm::Module *module, const std::string &name) const
+llvm::Function*			Type::CreateFunctionForSocket(llvm::Module *module, const std::string &name, const std::map<std::string, const llvm::Type*>& mapVariable) const
 {
 /*
  * TODO
@@ -104,11 +98,11 @@ llvm::Function*			Type::CreateFunctionForSocket(llvm::Module *module, const std:
 }
 
 // Fontion qui insert une fonction dans le module et la retourne
-llvm::Function*			Type::CreateFunction(llvm::Module* module, const std::string& name, MODE mode) const
+llvm::Function*			Type::CreateFunction(llvm::Module* module, const std::string& name, const std::map<std::string, const llvm::Type*>& mapVariable, MODE mode) const
 {	
     if (this->_functionBuilderMap.find(mode) == this->_functionBuilderMap.end())
         throw (std::logic_error("Unknown Mode"));
-    return ((this->*this->_functionBuilderMap.find(mode)->second)(module, name));
+    return ((this->*this->_functionBuilderMap.find(mode)->second)(module, name, mapVariable));
 }
 
 llvm::BasicBlock*               Type::BuildCode(llvm::BasicBlock *actionBlock, BUILDER_MODE builder_mode) const
@@ -119,20 +113,20 @@ llvm::BasicBlock*               Type::BuildCode(llvm::BasicBlock *actionBlock, B
    
 }
 
-bool			Type::BuildFunctions(llvm::Module *module, MODE mode)
+bool			Type::BuildFunctions(llvm::Module *module,const std::map<std::string, const llvm::Type*>& mapVariable, MODE mode) const
 {
-    llvm::Function*	encodeFunction = this->CreateFunction(module, std::string("__kpl__" + this->_name + "__encode__"), mode);
-    llvm::Function*	decodeFunction = this->CreateFunction(module, std::string("__kpl__" + this->_name + "__decode__"), mode);
+    llvm::Function*	encodeFunction = this->CreateFunction(module, std::string("__kpl__" + this->_name + "__encode__"), mapVariable, mode);
+    llvm::Function*	decodeFunction = this->CreateFunction(module, std::string("__kpl__" + this->_name + "__decode__"), mapVariable, mode);
 
     if (this->_modeMap.find(mode) == this->_modeMap.end())
-        throw (std::logic_error("Unknown Mode"));
-    this->BuildCode(++encodeFunction->begin(), this->_modeMap[mode].first);
-    this->BuildCode(++decodeFunction->begin(), this->_modeMap[mode].second);
+        throw (std::logic_error("Unknow mode"));
+    llvm::BasicBlock    *encodeActionBlockEnd = this->BuildCode(++encodeFunction->begin(), this->_modeMap.find(mode)->second.first);
+    llvm::BasicBlock    *decodeActionBlockEnd = this->BuildCode(++decodeFunction->begin(), this->_modeMap.find(mode)->second.second);
 
     llvm::IRBuilder<> builder(llvm::getGlobalContext());
-    builder.SetInsertPoint(++encodeFunction->begin());
+    builder.SetInsertPoint(encodeActionBlockEnd);
     builder.CreateRet(llvm::ConstantInt::get(llvm::getGlobalContext(), llvm::APInt(32, 0, false)));
-    builder.SetInsertPoint(++decodeFunction->begin());
+    builder.SetInsertPoint(decodeActionBlockEnd);
     builder.CreateRet(llvm::ConstantInt::get(llvm::getGlobalContext(), llvm::APInt(32, 0, false)));
     return (llvm::verifyFunction(*encodeFunction) && llvm::verifyFunction(*decodeFunction));
 }

@@ -16,13 +16,24 @@ namespace kpl
     public:
         StaticType();
         ~StaticType();
+        virtual int             GetSize() const = 0;
+
+        friend class Bitfield;
+        friend class StaticArray;
+        friend class StaticStruct;
+    protected:
+
+        // Build le type
+        bool                    Build(llvm::Module *, MODE) const;
         llvm::BasicBlock*	BuildEncodingToMemory(llvm::BasicBlock *) const;
         llvm::BasicBlock*	BuildDecodingFromMemory(llvm::BasicBlock *) const;
         llvm::BasicBlock*	BuildEncodingToFile(llvm::BasicBlock *) const;
         llvm::BasicBlock*	BuildDecodingFromFile(llvm::BasicBlock *) const;
         llvm::BasicBlock*	BuildEncodingToSocket(llvm::BasicBlock *) const;
         llvm::BasicBlock*	BuildDecodingFromSocket(llvm::BasicBlock *) const;
-    private:
+
+        // retourne le type equivalent en LLVM a un StaticType de KOPUL
+        virtual const llvm::Type*       GetLLVMType() const = 0;
     };
 };
 

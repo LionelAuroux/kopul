@@ -7,11 +7,9 @@ namespace kpl
 	class	DynamicArray : public Type
 	{
 	protected:
-		int			buildEncodeFunction(llvm::Function *);
-		int			buildDecodeFunction(llvm::Function *);
+            Type*   _type;
 	public:
             DynamicArray(const Type& type);
-            friend class Type;
 	};
 };
 

@@ -11,7 +11,9 @@ SRC		=	srcs/Type.cpp			\
 			srcs/StaticStruct.cpp		\
 			srcs/StaticType.cpp		\
 			srcs/Expression.cpp		\
-			srcs/ExpressionBuilder.cpp
+			srcs/ExpressionBuilder.cpp	\
+			srcs/Register.cpp
+
 OBJDIR		=	objs
 OBJ		=	$(SRC:.cpp=.o)
 RM		=	rm -f

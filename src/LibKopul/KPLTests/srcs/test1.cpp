@@ -1,24 +1,24 @@
+#include "Register.h"
 #include "Bitfield.h"
-#include "llvm/Target/TargetData.h"
-#include "llvm/Target/TargetSelect.h"
+#include "StaticArray.h"
+#include "StaticStruct.h"
 
-
-using namespace llvm;
 using namespace kpl;
 
 int main()
 {
-	InitializeNativeTarget();
-
 	//Creation d'un module
-	Module 		*mod = new Module("test", getGlobalContext());
-	Bitfield	bit(1);
+    Register        reg;
+    StaticStruct    sstruct;
+    Bitfield        bit(1);
+    Bitfield        bit4(4);
+    StaticArray     staticArray(bit4, 4);
 
-	bit.SetName("i1");
-	bit.BuildFunctions(mod, MEMORY_MODE);
-	bit.SetName("i7");
-	bit.SetSize(7);
-	bit.BuildFunctions(mod, MEMORY_MODE);
-	mod->dump();
-	return (0);
+    sstruct.SetName("struct");
+    bit.SetName("i1");
+    staticArray.SetName("array");
+    sstruct << bit4 << bit4 << staticArray << bit4 << bit4 << bit4;
+    reg << staticArray << sstruct << bit;
+    reg.Dump();
+    return (0);
 }
