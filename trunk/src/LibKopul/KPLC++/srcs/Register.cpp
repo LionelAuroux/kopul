@@ -11,11 +11,9 @@ using namespace kpl;
 
 bool Register::_llvmIsInit;
 
-Register::Register(MODE mode)
+Register::Register()
 {
-    _module = NULL;
     _moduleName = "Kopul";
-    _mode = mode;
     if (!_llvmIsInit)
     {
 	llvm::InitializeNativeTarget();
@@ -26,9 +24,7 @@ Register::Register(MODE mode)
 
 Register::Register(const Register&reg)
 {
-    _module = NULL;
     _moduleName = "Kopul";
-    _mode = reg._mode;
     for (unsigned int i = 0; i < reg._listType.size(); ++i)
         this->Add(reg._listType[i]);
 }
@@ -41,7 +37,8 @@ Register::~Register()
 Register&   Register::operator = (const Register& reg)
 {
     this->_moduleName = "Kopul";
-    this->_mode = reg._mode;
+    for (unsigned int i = 0; i < reg._listType.size(); ++i)
+        this->Add(reg._listType[i]);
     return (*this);
 }
 
@@ -74,25 +71,73 @@ void    Register::Clear()
     this->_listType.clear();
 }
 
-void    Register::Dump()
+void    Register::Dump(MODE mode) const
 {
+    llvm::Module    *_module;
+
     if (this->_listType.size() == 0)
     {
         std::cout << "No type register to dump" << std::endl;
         return ;
     }
-    this->_module = new llvm::Module(this->_moduleName.c_str(), llvm::getGlobalContext());
+    _module = new llvm::Module(this->_moduleName.c_str(), llvm::getGlobalContext());
     llvm::GlobalVariable    *nbBytes = new llvm::GlobalVariable(llvm::IntegerType::get(llvm::getGlobalContext(), 8), false, llvm::GlobalVariable::InternalLinkage, llvm::ConstantInt::get(llvm::getGlobalContext(), llvm::APInt(8, 0, false)), "_nbBytes");
-    this->_module->getGlobalList().push_back(nbBytes);
+    _module->getGlobalList().push_back(nbBytes);
     for (unsigned int i = 0; i < this->_listType.size(); ++i)
-        this->_listType[i]->Build(this->_module, this->_mode);
-    this->_module->dump();
-    delete (this->_module);
+        this->_listType[i]->Build(_module, mode);
+    _module->dump();
+    delete (_module);
 }
 
-void    Register::Compile()
+FunctionList<int (*)(stream, ...)> *Register::CompileInMemoryMode() const
 {
-    //TODO
+    llvm::Module    *_module;
+
+    if (this->_listType.size() == 0)
+    {
+        std::cout << "No type register to compile" << std::endl;
+        return (NULL);
+    }
+    _module = new llvm::Module(this->_moduleName.c_str(), llvm::getGlobalContext());
+    llvm::GlobalVariable    *nbBytes = new llvm::GlobalVariable(llvm::IntegerType::get(llvm::getGlobalContext(), 8), false, llvm::GlobalVariable::InternalLinkage, llvm::ConstantInt::get(llvm::getGlobalContext(), llvm::APInt(8, 0, false)), "_nbBytes");
+    _module->getGlobalList().push_back(nbBytes);
+    for (unsigned int i = 0; i < this->_listType.size(); ++i)
+        this->_listType[i]->Build(_module, MEMORY_MODE);
+    return (new FunctionList<int (*)(stream, ...)>(_module, this->_listType));
+}
+
+FunctionList<int (*)(fd, ...)>     *Register::CompileInFileMode() const
+{
+    llvm::Module    *_module;
+
+    if (this->_listType.size() == 0)
+    {
+        std::cout << "No type register to compile" << std::endl;
+        return (NULL);
+    }
+    _module = new llvm::Module(this->_moduleName.c_str(), llvm::getGlobalContext());
+    llvm::GlobalVariable    *nbBytes = new llvm::GlobalVariable(llvm::IntegerType::get(llvm::getGlobalContext(), 8), false, llvm::GlobalVariable::InternalLinkage, llvm::ConstantInt::get(llvm::getGlobalContext(), llvm::APInt(8, 0, false)), "_nbBytes");
+    _module->getGlobalList().push_back(nbBytes);
+    for (unsigned int i = 0; i < this->_listType.size(); ++i)
+        this->_listType[i]->Build(_module, FILE_MODE);
+    return (new FunctionList<int (*)(fd, ...)>(_module, this->_listType));
+}
+
+FunctionList<int (*)(socket, ...)> *Register::CompileInSocketMode() const
+{
+    llvm::Module    *_module;
+
+    if (this->_listType.size() == 0)
+    {
+        std::cout << "No type register to compile" << std::endl;
+        return (NULL);
+    }
+    _module = new llvm::Module(this->_moduleName.c_str(), llvm::getGlobalContext());
+    llvm::GlobalVariable    *nbBytes = new llvm::GlobalVariable(llvm::IntegerType::get(llvm::getGlobalContext(), 8), false, llvm::GlobalVariable::InternalLinkage, llvm::ConstantInt::get(llvm::getGlobalContext(), llvm::APInt(8, 0, false)), "_nbBytes");
+    _module->getGlobalList().push_back(nbBytes);
+    for (unsigned int i = 0; i < this->_listType.size(); ++i)
+        this->_listType[i]->Build(_module, SOCKET_MODE);
+    return (new FunctionList<int (*)(socket, ...)>(_module, this->_listType));
 }
 
 const std::string&  Register::GetRegisterName() const
