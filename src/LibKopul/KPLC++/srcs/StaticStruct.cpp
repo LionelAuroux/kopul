@@ -86,6 +86,13 @@ int                 StaticStruct::GetSize() const
     return (size);
 }
 
+int                 StaticStruct::GetSizeInOctet() const
+{
+    if (this->GetSize() % 8 > 0)
+        return (this->GetSize() / 8 + 1);
+    return (this->GetSize() / 8);
+}
+
 const llvm::Type*   StaticStruct::GetLLVMType() const
 {
     std::vector<const llvm::Type*> listTypeLLVM;

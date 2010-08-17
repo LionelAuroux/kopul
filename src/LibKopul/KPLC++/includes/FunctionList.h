@@ -54,16 +54,26 @@ namespace kpl
         friend class Register;
 
         ~FunctionList();
-        const FunctionPair<T>&   operator [] (const Type *) const;
-        const FunctionPair<T>&   operator [] (const Type &) const;
-        const FunctionPair<T>&   operator [] (const std::string &) const;
-        const FunctionPair<T>&   operator [] (unsigned int i) const;
+        const FunctionPair<T>&  operator [] (const Type *) const;
+        const FunctionPair<T>&  operator [] (const Type &) const;
+        const FunctionPair<T>&  operator [] (const std::string &) const;
+        const FunctionPair<T>&  operator [] (unsigned int i) const;
+
+        const FunctionPair<T>&  Get(const Type *) const;
+        const FunctionPair<T>&  Get(const Type &) const;
+        const FunctionPair<T>&  Get(const std::string &) const;
+        const FunctionPair<T>&  Get(unsigned int i) const;
+
+        int                     GetNbBytesWrite() const;
+        int                     GetNbBytesRead() const;
     protected:
         FunctionList(llvm::Module *, const std::vector<Type *>&);
     private:
         std::map<Type *, FunctionPair<T> >  _mapFunctions;
         llvm::Module                        *_module;
         FunctionPair<T>                     _end;
+        char                                *_nbBytesWriteAdr;
+        char                                *_nbBytesReadAdr;
     };
 };
 

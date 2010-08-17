@@ -1,9 +1,12 @@
 GPP		=	g++
 NAME		=	test
-SRC		=	srcs/test1.cpp
+SRC		=	srcs/main.cpp			\
+			srcs/testBitfield.cpp		\
+			srcs/testStaticArray.cpp	\
+			srcs/testStaticStruct.cpp
 OBJ		=	$(SRC:.cpp=.o)
 RM		=	rm -f
-INCFLAGS	=	-I../KPLC++/includes
+INCFLAGS	=	-I../KPLC++/includes -I./includes/
 LFLAGS		=	-L../KPLC++/ -lkopul `llvm-config --ldflags --libs `
 CPPFLAGS	= 	-W -Wall `llvm-config --cxxflags` $(INCFLAGS) $(LFLAGS)
 CMD		=	$(GPP) -o $(NAME) $(OBJ) $(LFLAGS)

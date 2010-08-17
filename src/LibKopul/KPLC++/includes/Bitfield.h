@@ -12,19 +12,20 @@ namespace kpl
             ~Bitfield();
             Bitfield&           operator = (const Bitfield&);
             int                 GetSize() const;
+            int                 GetSizeInOctet() const;
             void                SetSize(int size);
 
             // Get a string representation of the object
-            const std::string&  ToString() const;
+            virtual const std::string&  ToString() const;
 
             // Get the type of the object
-            const std::string&  GetType() const;
+            virtual const std::string&  GetType() const;
 
             // returns true if the given type and content are equal.
-            bool                Equals(const IObject &value) const;
+            virtual bool                Equals(const IObject &value) const;
 
             // create a new instance by making a deep copy of the current object data
-            IObject*            Clone() const;
+            virtual IObject*            Clone() const;
 
         protected:
             const llvm::Type*   GetLLVMType() const;

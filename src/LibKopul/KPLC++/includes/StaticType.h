@@ -16,7 +16,10 @@ namespace kpl
     public:
         StaticType();
         ~StaticType();
+        // Size in bytes
         virtual int             GetSize() const = 0;
+        // Size in octet
+        virtual int             GetSizeInOctet() const = 0;
 
         friend class Bitfield;
         friend class StaticArray;
