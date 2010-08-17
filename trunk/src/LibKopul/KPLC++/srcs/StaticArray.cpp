@@ -46,6 +46,13 @@ int             StaticArray::GetSize() const
     return (this->_staticType->GetSize() * this->_size);
 }
 
+int             StaticArray::GetSizeInOctet() const
+{
+    if (this->GetSize() % 8 > 0)
+        return (this->GetSize() / 8 + 1);
+    return (this->GetSize() / 8);
+}
+
 const llvm::Type*   StaticArray::GetLLVMType() const
 {
     return (llvm::ArrayType::get(this->_staticType->GetLLVMType(), this->_size));

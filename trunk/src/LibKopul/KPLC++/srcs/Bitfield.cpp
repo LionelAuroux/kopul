@@ -41,6 +41,13 @@ int		Bitfield::GetSize() const
 	return (this->_size);
 }
 
+int             Bitfield::GetSizeInOctet() const
+{
+    if (this->_size % 8 > 0)
+        return (this->_size / 8 + 1);
+    return (this->_size / 8);
+}
+
 void		Bitfield::SetSize(int size)
 {
     std::ostringstream  oss;

@@ -64,6 +64,8 @@ FunctionList<T>::FunctionList(llvm::Module *module, const std::vector<Type *> &l
     void                    *pfdecode;
 
     this->_module = module;
+    this->_nbBytesWriteAdr = (char *)exec->getOrEmitGlobalVariable(static_cast<const llvm::GlobalVariable *>(module->getValueSymbolTable().lookup("_nbBytesWrite")));
+    this->_nbBytesReadAdr = (char *)exec->getOrEmitGlobalVariable(static_cast<const llvm::GlobalVariable *>(module->getValueSymbolTable().lookup("_nbBytesRead")));
     for (unsigned int i = 0; itb != ite; ++itb, ++i)
     {
         pfencode = exec->recompileAndRelinkFunction(itb);
@@ -98,7 +100,9 @@ const FunctionPair<T>&   FunctionList<T>::operator [] (const Type &type) const
     for (typename std::map<Type *, FunctionPair<T> >::const_iterator it = this->_mapFunctions.begin(); it != this->_mapFunctions.end(); ++it)
     {
         if (it->first->Equals(type))
+        {
             return (it->second);
+        }
     }
     return (this->_end);
 }
@@ -123,6 +127,64 @@ const FunctionPair<T>&   FunctionList<T>::operator [] (unsigned int i) const
             return (it->second);
     }
     return (this->_end);
+}
+
+template <typename T>
+const FunctionPair<T>&   FunctionList<T>::Get(const Type *type) const
+{
+    for (typename std::map<Type *, FunctionPair<T> >::const_iterator it = this->_mapFunctions.begin(); it != this->_mapFunctions.end(); ++it)
+    {
+        if (it->first->Equals(*type))
+            return (it->second);
+    }
+    return (this->_end);
+}
+
+template <typename T>
+const FunctionPair<T>&   FunctionList<T>::Get(const Type &type) const
+{
+    for (typename std::map<Type *, FunctionPair<T> >::const_iterator it = this->_mapFunctions.begin(); it != this->_mapFunctions.end(); ++it)
+    {
+        if (it->first->Equals(type))
+        {
+            return (it->second);
+        }
+    }
+    return (this->_end);
+}
+
+template <typename T>
+const FunctionPair<T>&   FunctionList<T>::Get(const std::string &name) const
+{
+    for (typename std::map<Type *, FunctionPair<T> >::const_iterator it = this->_mapFunctions.begin(); it != this->_mapFunctions.end(); ++it)
+    {
+        if (it->first->GetName() == name)
+            return (it->second);
+    }
+    return (this->_end);
+}
+
+template <typename T>
+const FunctionPair<T>&   FunctionList<T>::Get(unsigned int i) const
+{
+    for (typename std::map<Type *, FunctionPair<T> >::const_iterator it = this->_mapFunctions.begin(); it != this->_mapFunctions.end(); ++it, --i)
+    {
+        if (i == 0)
+            return (it->second);
+    }
+    return (this->_end);
+}
+
+template <typename T>
+int                     FunctionList<T>::GetNbBytesWrite() const
+{
+    return ((int)*this->_nbBytesWriteAdr);
+}
+
+template <typename T>
+int                     FunctionList<T>::GetNbBytesRead() const
+{
+    return ((int)*this->_nbBytesReadAdr);
 }
 
 template class FunctionList<int (*)(char **, ...)>;
