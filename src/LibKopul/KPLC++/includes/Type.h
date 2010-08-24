@@ -16,13 +16,13 @@ namespace kpl
     public:
 	Type();
         ~Type();
+        const std::string&              GetEncodeFunctionName() const;
+        const std::string&              GetDecodeFunctionName() const;
 	const std::string&		GetName() const;
 	void				SetName(const std::string&);
         friend class Register;
 
     protected:
-	// Nom qui servira pour les noms des functions genere
-	std::string			_name;
 
         // Ajoute une fonction au module
         llvm::Function*			CreateFunctionForMemory(llvm::Module *, const std::string &name, const std::map<std::string, const llvm::Type*>&) const;
@@ -53,6 +53,10 @@ namespace kpl
         // Un mode est associe a deux mode de constructions, 1 de decodage et 1 d'encodage
         std::map<MODE, std::pair<BUILDER_MODE, BUILDER_MODE> >  _modeMap;
         // Un type peut prendre des variable comme parametre
+        	// Nom qui servira pour les noms des functions genere
+	std::string                                             _name;
+        std::string                                             _encodeFunctionName;
+        std::string                                             _decodeFunctionName;
     };
 };
 

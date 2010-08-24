@@ -13,7 +13,7 @@ StaticStruct::StaticStruct(const StaticStruct& staticStruct)
 {
     _objectType = "StaticStruct";
     _objectToStr = _objectType + "_of_";
-    _name = staticStruct._name;
+    SetName(staticStruct.GetName());
     for (unsigned int i = 0; i < staticStruct._listType.size(); ++i)
     {
         this->_listType.push_back(static_cast<StaticType *>(staticStruct._listType[i]->Clone()));
@@ -29,9 +29,9 @@ StaticStruct::~StaticStruct()
 StaticStruct&   StaticStruct::operator = (const StaticStruct& staticStruct)
 {
     this->Clear();
-    _objectType = "StaticStruct";
-    _objectToStr = _objectType + "_of_";
-    _name = staticStruct._name;
+    this->_objectType = "StaticStruct";
+    this->_objectToStr = _objectType + "_of_";
+    this->SetName(staticStruct.GetName());
     for (unsigned int i = 0; i < staticStruct._listType.size(); ++i)
     {
         this->_listType.push_back(static_cast<StaticType *>(staticStruct._listType[i]->Clone()));
@@ -77,7 +77,7 @@ void                            StaticStruct::Clear()
     this->_listType.clear();
 }
 
-int                 StaticStruct::GetSize() const
+int                    StaticStruct::GetSize() const
 {
     int size = 0;
 
@@ -86,7 +86,7 @@ int                 StaticStruct::GetSize() const
     return (size);
 }
 
-int                 StaticStruct::GetSizeInOctet() const
+int                    StaticStruct::GetSizeInOctet() const
 {
     if (this->GetSize() % 8 > 0)
         return (this->GetSize() / 8 + 1);

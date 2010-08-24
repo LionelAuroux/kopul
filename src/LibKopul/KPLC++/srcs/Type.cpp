@@ -27,6 +27,16 @@ Type::~Type()
 
 }
 
+const std::string&              Type::GetEncodeFunctionName() const
+{
+    return (this->_encodeFunctionName);
+}
+
+const std::string&              Type::GetDecodeFunctionName() const
+{
+    return (this->_decodeFunctionName);
+}
+
 const std::string&		Type::GetName() const
 {
     return (this->_name);
@@ -34,7 +44,9 @@ const std::string&		Type::GetName() const
 
 void				Type::SetName(const std::string& name)
 {
-	this->_name = name;
+    this->_name = name;
+    this->_encodeFunctionName = "__kpl__" + this->_name + "__encode__";
+    this->_decodeFunctionName = "__kpl__" + this->_name + "__decode__";
 }
 
 llvm::Function*			Type::CreateFunctionForMemory(llvm::Module *module, const std::string &name, const std::map<std::string, const llvm::Type*>& mapVariable) const
@@ -74,9 +86,13 @@ llvm::Function*			Type::CreateFunctionForMemory(llvm::Module *module, const std:
     builder.SetInsertPoint(entryBlock);
 //    builder.CreateBitCast(newFunction->getValueSymbolTable().lookup("i8StreamAdr"), llvm::PointerType::getUnqual(ptr_stream), "streamAdr");
     builder.CreateLoad(newFunction->getValueSymbolTable().lookup("i8StreamAdr"), "streamAdrBackUp");
+    builder.CreateLoad(newFunction->getParent()->getValueSymbolTable().lookup("_nbBytesWrite"), "nbBytesWriteBackUp");
+    builder.CreateLoad(newFunction->getParent()->getValueSymbolTable().lookup("_nbBytesRead"), "nbBytesReadBackUp");
     builder.CreateBr(actionBlock);
     builder.SetInsertPoint(errorBlock);
     builder.CreateStore(newFunction->getValueSymbolTable().lookup("streamAdrBackUp"), newFunction->getValueSymbolTable().lookup("i8StreamAdr"));
+    builder.CreateStore(newFunction->getValueSymbolTable().lookup("nbBytesWriteBackUp"), newFunction->getParent()->getValueSymbolTable().lookup("_nbBytesWrite"));
+    builder.CreateStore(newFunction->getValueSymbolTable().lookup("nbBytesReadBackUp"), newFunction->getParent()->getValueSymbolTable().lookup("_nbBytesRead"));
     builder.CreateRet(llvm::ConstantInt::get(llvm::getGlobalContext(), llvm::APInt(32, -1, false)));
     return (newFunction);
 }
@@ -115,8 +131,8 @@ llvm::BasicBlock*               Type::BuildCode(llvm::BasicBlock *actionBlock, B
 
 bool			Type::BuildFunctions(llvm::Module *module,const std::map<std::string, const llvm::Type*>& mapVariable, MODE mode) const
 {
-    llvm::Function*	encodeFunction = this->CreateFunction(module, std::string("__kpl__" + this->_name + "__encode__"), mapVariable, mode);
-    llvm::Function*	decodeFunction = this->CreateFunction(module, std::string("__kpl__" + this->_name + "__decode__"), mapVariable, mode);
+    llvm::Function*	encodeFunction = this->CreateFunction(module, this->GetEncodeFunctionName(), mapVariable, mode);
+    llvm::Function*	decodeFunction = this->CreateFunction(module, this->GetDecodeFunctionName(), mapVariable, mode);
 
     if (this->_modeMap.find(mode) == this->_modeMap.end())
         throw (std::logic_error("Unknow mode"));
