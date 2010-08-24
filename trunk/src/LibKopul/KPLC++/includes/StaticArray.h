@@ -12,8 +12,8 @@ namespace kpl
             ~StaticArray();
             StaticArray&        operator = (const StaticArray&);
 
-            int             GetSize() const;
-            int             GetSizeInOctet() const;
+            int                 GetSize() const;
+            int                 GetSizeInOctet() const;
             // Get a string representation of the object
             virtual const std::string&  ToString() const;
 

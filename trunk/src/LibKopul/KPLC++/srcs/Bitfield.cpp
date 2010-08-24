@@ -19,7 +19,7 @@ Bitfield::Bitfield(const Bitfield& bit)
     _size = bit._size;
     _objectType = bit._objectType;
     _objectToStr = bit._objectToStr;
-    _name = bit._name;
+    SetName(bit.GetName());
 }
 
 Bitfield::~Bitfield()
@@ -32,16 +32,16 @@ Bitfield&   Bitfield::operator = (const Bitfield& bit)
     this->_size = bit._size;
     this->_objectType = bit._objectType;
     this->_objectToStr = bit._objectToStr;
-    this->_name = bit._name;
+    this->SetName(bit.GetName());
     return (*this);
 }
 
-int		Bitfield::GetSize() const
+int         Bitfield::GetSize() const
 {
 	return (this->_size);
 }
 
-int             Bitfield::GetSizeInOctet() const
+int         Bitfield::GetSizeInOctet() const
 {
     if (this->_size % 8 > 0)
         return (this->_size / 8 + 1);

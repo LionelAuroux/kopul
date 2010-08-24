@@ -24,7 +24,7 @@ StaticArray::StaticArray(const StaticArray& array)
     _objectType = "StaticArray";
     oss << _size;
     _objectToStr = _objectType + "_of_" + oss.str() + "_" + _staticType->ToString();
-    _name = array._name;
+    SetName(array.GetName());
 }
 
 StaticArray::~StaticArray()
@@ -37,7 +37,7 @@ StaticArray&    StaticArray::operator = (const StaticArray& array)
     delete (this->_staticType);
     this->_staticType = static_cast<StaticType *>(array._staticType->Clone());
     this->_size = array._size;
-    _name = array._name;
+    this->SetName(array.GetName());
     return (*this);
 }
 

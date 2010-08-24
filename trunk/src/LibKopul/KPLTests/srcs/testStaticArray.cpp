@@ -38,10 +38,10 @@ namespace NamespaceTestStaticArray
         std::cout << "On veut set un bitfield et un array de valeurs          : " << (int)bitToStore << " " << strToStore << std::endl;
 
         listFunction[bit5].encode(&test, &bitToStore);
-        listFunction[array].encode(&test, &strToStore);
+        listFunction[array].encode(&test, strToStore);
         test = tmp;
         listFunction[bit5].decode(&test, &bitToLoad);
-        listFunction[array].decode(&test, &strToLoad);
+        listFunction[array].decode(&test, strToLoad);
 
         std::cout << "Valeurs du bitfield et de l'array read par les fonctions: " << (int)bitToLoad << " " << strToLoad << std::endl;
 

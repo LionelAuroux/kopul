@@ -3,7 +3,8 @@ NAME		=	test
 SRC		=	srcs/main.cpp			\
 			srcs/testBitfield.cpp		\
 			srcs/testStaticArray.cpp	\
-			srcs/testStaticStruct.cpp
+			srcs/testStaticStruct.cpp	\
+			srcs/testValue.cpp
 OBJ		=	$(SRC:.cpp=.o)
 RM		=	rm -f
 INCFLAGS	=	-I../KPLC++/includes -I./includes/
