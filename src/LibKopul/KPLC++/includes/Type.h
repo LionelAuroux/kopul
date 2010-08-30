@@ -4,6 +4,7 @@
 
 # include "Item.h"
 
+# define CONVERT_NBBYTES_TO_NBOCTET(x) (((x) % 8 > 0) ? ((x) / 8 + 1) : ((x) / 8))
 
 namespace kpl
 {
@@ -23,6 +24,11 @@ namespace kpl
         friend class Register;
 
     protected:
+
+        // BlockOut (Stream, nbBytes, sizeInBytes, WhereToBuild)
+        llvm::BasicBlock*               AddSizeToStream(llvm::Value *streamAdr, llvm::Value *nbBytesAdr, int sizeInBytes, llvm::BasicBlock *whereToBuild) const;
+        llvm::BasicBlock*               StoreParamToStream(llvm::Value *streamAdr, llvm::Value *nbBytesAdr, llvm::Value *paramAdr, int sizeParamInBytes, llvm::BasicBlock *whereToBuild, const std::string &newBlockName = "") const;
+        llvm::BasicBlock*               LoadParamFromStream(llvm::Value *streamAdr, llvm::Value *nbBytesAdr, llvm::Value *paramAdr, int sizeParamInBytes, llvm::BasicBlock *whereToBuild, const std::string &newBlockName = "") const;
 
         // Ajoute une fonction au module
         llvm::Function*			CreateFunctionForMemory(llvm::Module *, const std::string &name, const std::map<std::string, const llvm::Type*>&) const;

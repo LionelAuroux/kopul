@@ -5,7 +5,9 @@
  * Created on August 24, 2010, 3:28 PM
  */
 
+#include "Type.h"
 #include "Container.h"
+#include "StaticType.h"
 
 using namespace kpl;
 
@@ -60,10 +62,15 @@ template <typename T>
 Container<T>&   Container<T>::operator << (const T& toAdd)
 {
     this->Add(toAdd);
+    return (*this);
 }
 
 template <typename T>
 Container<T>&   Container<T>::operator << (const T* toAdd)
 {
     this->Add(*toAdd);
+    return (*this);
 }
+
+template class Container<Type>;
+template class Container<StaticType>;

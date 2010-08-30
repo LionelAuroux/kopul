@@ -30,19 +30,16 @@ bool                    StaticType::Build(llvm::Module *module, MODE mode) const
 
 llvm::BasicBlock*	StaticType::BuildEncodingToMemory(llvm::BasicBlock *actionBlock) const
 {
+    /*
 	llvm::IRBuilder<>               builder(llvm::getGlobalContext());
         // iterator pour les basickBlocks, ont veut recuperer le 3eme (error).
         llvm::Function::iterator        bIterator = actionBlock->getParent()->begin();++bIterator;++bIterator;
         llvm::BasicBlock                *errorBlock = bIterator;
         llvm::BasicBlock                *addSizeToStreamBlock = llvm::BasicBlock::Create(llvm::getGlobalContext(), "addSizeTo", actionBlock->getParent());
-        llvm::BasicBlock                *incStreamBlock = llvm::BasicBlock::Create(llvm::getGlobalContext(), "incStream", actionBlock->getParent());
-        llvm::BasicBlock                *newActionBlock = llvm::BasicBlock::Create(llvm::getGlobalContext(), "action", actionBlock->getParent());
         llvm::BasicBlock                *caseNotFoundBlock = llvm::BasicBlock::Create(llvm::getGlobalContext(), "caseNotFound", actionBlock->getParent());
-        llvm::BasicBlock                *finalyzeBlock = llvm::BasicBlock::Create(llvm::getGlobalContext(), "finalyze", actionBlock->getParent());
         llvm::BasicBlock                *caseBlock;
         llvm::Value                     *stream;
         llvm::Value                     *streamBytes;
-//        llvm::Value                     *streamParam;
         llvm::Value                     *bytesBitCasted;
         llvm::Value                     *paramBitCasted;
         llvm::Value                     *tmp;
@@ -96,103 +93,22 @@ llvm::BasicBlock*	StaticType::BuildEncodingToMemory(llvm::BasicBlock *actionBloc
             }
             sw->addCase(llvm::ConstantInt::get(llvm::getGlobalContext(), llvm::APInt(8, i, false)), caseBlock);
         }
-        builder.SetInsertPoint(addSizeToStreamBlock);
-        llvm::Value *castStreamToInt = builder.CreatePtrToInt(i8Stream, llvm::IntegerType::get(llvm::getGlobalContext(), 64));
-        llvm::Value *addSizeToStream = builder.CreateAdd(castStreamToInt, llvm::ConstantInt::get(llvm::getGlobalContext(), llvm::APInt(64, this->GetSize() / 8, false)));
-        llvm::Value *addSizeToNbBytes = builder.CreateAdd(nbBytes, llvm::ConstantInt::get(llvm::getGlobalContext(), llvm::APInt(8, this->GetSize() % 8, false)));
+	return (this->AddSizeToStream(actionBlock->getValueSymbolTable()->lookup("i8StreamAdr"), actionBlock->getParent()->getParent()->getValueSymbolTable().lookup("_nbBytesWrite"), this->GetSize(), addSizeToStreamBlock));
+    */
+    llvm::Value *streamAdr = actionBlock->getValueSymbolTable()->lookup("i8StreamAdr");
+    llvm::Value *nbBytesAdr = actionBlock->getParent()->getParent()->getValueSymbolTable().lookup("_nbBytesWrite");
+    llvm::BasicBlock    *addSizeToStreamBlock = this->StoreParamToStream(streamAdr, nbBytesAdr, actionBlock->getValueSymbolTable()->lookup(this->GetName() + "paramAdr"), this->GetSize(), actionBlock, std::string("addSizeTo"));
 
-        llvm::Value   *nbBytesSupTo8 = builder.CreateICmpSGT(addSizeToNbBytes, llvm::ConstantInt::get(llvm::getGlobalContext(), llvm::APInt(8, 7, false)), "nbBytesSupTo8");
-	builder.CreateCondBr(nbBytesSupTo8, incStreamBlock, finalyzeBlock);
-        builder.SetInsertPoint(incStreamBlock);
-        llvm::Value   *add1ToStream = builder.CreateAdd(addSizeToStream, llvm::ConstantInt::get(llvm::getGlobalContext(), llvm::APInt(64, 1, false)));
-        llvm::Value   *add1ToNbBytes = builder.CreateSub(addSizeToNbBytes, llvm::ConstantInt::get(llvm::getGlobalContext(), llvm::APInt(8, 8, false)));
-        llvm::Value   *castIntToStream = builder.CreateIntToPtr(add1ToStream, llvm::PointerType::getUnqual(llvm::Type::getInt8Ty(llvm::getGlobalContext())), "newStream");
-        builder.CreateStore(castIntToStream, actionBlock->getValueSymbolTable()->lookup("i8StreamAdr"));
-        builder.CreateStore(add1ToNbBytes, actionBlock->getParent()->getParent()->getValueSymbolTable().lookup("_nbBytesWrite"));
-        builder.CreateBr(newActionBlock);
-        builder.SetInsertPoint(finalyzeBlock);
-        castIntToStream = builder.CreateIntToPtr(addSizeToStream, llvm::PointerType::getUnqual(llvm::Type::getInt8Ty(llvm::getGlobalContext())), "newStream");
-        builder.CreateStore(castIntToStream, actionBlock->getValueSymbolTable()->lookup("i8StreamAdr"));
-        builder.CreateStore(addSizeToNbBytes, actionBlock->getParent()->getParent()->getValueSymbolTable().lookup("_nbBytesWrite"));
-        builder.CreateBr(newActionBlock);
-	return (newActionBlock);
+    return (this->AddSizeToStream(streamAdr, nbBytesAdr, this->GetSize(), addSizeToStreamBlock));
 }
 
 llvm::BasicBlock*	StaticType::BuildDecodingFromMemory(llvm::BasicBlock *actionBlock) const
 {
-	llvm::IRBuilder<>               builder(llvm::getGlobalContext());
-        // iterator pour les basickBlocks, ont veut recuperer le 3eme (error).
-        llvm::Function::iterator        bIterator = actionBlock->getParent()->begin();++bIterator;++bIterator;
-        llvm::BasicBlock                *errorBlock = bIterator;
-        llvm::BasicBlock                *addSizeToStreamBlock = llvm::BasicBlock::Create(llvm::getGlobalContext(), "addSizeTo", actionBlock->getParent());
-        llvm::BasicBlock                *incStreamBlock = llvm::BasicBlock::Create(llvm::getGlobalContext(), "incStream", actionBlock->getParent());
-        llvm::BasicBlock                *newActionBlock = llvm::BasicBlock::Create(llvm::getGlobalContext(), "action", actionBlock->getParent());
-        llvm::BasicBlock                *caseNotFoundBlock = llvm::BasicBlock::Create(llvm::getGlobalContext(), "caseNotFound", actionBlock->getParent());
-        llvm::BasicBlock                *finalyzeBlock = llvm::BasicBlock::Create(llvm::getGlobalContext(), "finalyze", actionBlock->getParent());
-        llvm::BasicBlock                *caseBlock;
-        llvm::Value                     *stream;
-        llvm::Value                     *tmp;
-        llvm::Value                     *readFromStream;
-        std::vector<const llvm::Type*>  listType;
-        std::string                     nameCaseBlock;
+    llvm::Value *streamAdr = actionBlock->getValueSymbolTable()->lookup("i8StreamAdr");
+    llvm::Value *nbBytesAdr = actionBlock->getParent()->getParent()->getValueSymbolTable().lookup("_nbBytesRead");
+    llvm::BasicBlock    *addSizeToStreamBlock = this->LoadParamFromStream(streamAdr, nbBytesAdr, actionBlock->getValueSymbolTable()->lookup(this->GetName() + "paramAdr"), this->GetSize(), actionBlock, std::string("addSizeTo"));
 
-        builder.SetInsertPoint(actionBlock);
-        llvm::Value *i8Stream = builder.CreateLoad(actionBlock->getValueSymbolTable()->lookup("i8StreamAdr"), "i8Stream");
-        llvm::Value *nbBytes = builder.CreateLoad(actionBlock->getParent()->getParent()->getValueSymbolTable().lookup("_nbBytesRead"), "nbBytes");
-        llvm::SwitchInst*   sw = builder.CreateSwitch(nbBytes, caseNotFoundBlock, 8);
-        builder.SetInsertPoint(caseNotFoundBlock);
-        builder.CreateBr(errorBlock);
-        for (int i = 0; i < 8; ++i)
-        {
-            listType.clear();
-            nameCaseBlock = "case";
-            nameCaseBlock += ('0' + (char)i);
-            caseBlock = llvm::BasicBlock::Create(llvm::getGlobalContext(), nameCaseBlock.c_str(), actionBlock->getParent());
-            builder.SetInsertPoint(caseBlock);
-            if (i == 0)
-            {
-                stream = builder.CreateBitCast(i8Stream, llvm::PointerType::getUnqual(llvm::IntegerType::get(llvm::getGlobalContext(), this->GetSizeInOctet() * 8)), "stream");
-                tmp = builder.CreateLoad(stream, "tmp");
-                tmp = builder.CreateMul(tmp, llvm::ConstantInt::get(llvm::getGlobalContext(), llvm::APInt(this->GetSize(), pow(2, (this->GetSizeInOctet() * 8) - this->GetSize()), false)), "tmp");
-                readFromStream = builder.CreateUDiv(tmp, llvm::ConstantInt::get(llvm::getGlobalContext(), llvm::APInt(this->GetSize(), pow(2, (this->GetSizeInOctet() * 8) - this->GetSize()), false)), "tmp");
-                //readFromStream = builder.CreateIntCast(tmp, llvm::IntegerType::get(llvm::getGlobalContext(), this->GetSizeInOctet() * 8), false, "readFromStream");
-                builder.CreateStore(readFromStream, actionBlock->getValueSymbolTable()->lookup(this->GetName() + "paramAdr"));
-//                builder.CreateStore(llvm::ConstantInt::get(llvm::getGlobalContext(), llvm::APInt(i + this->GetSize(), 2, false)), actionBlock->getValueSymbolTable()->lookup(this->GetName() + "paramAdr"));
-                builder.CreateBr(addSizeToStreamBlock);
-            }
-            else
-            {
-                stream = builder.CreateBitCast(i8Stream, llvm::PointerType::getUnqual(llvm::IntegerType::get(llvm::getGlobalContext(), i + this->GetSize())), "streamBytes");
-                tmp = builder.CreateLoad(stream);
-                tmp = builder.CreateUDiv(tmp, llvm::ConstantInt::get(llvm::getGlobalContext(), llvm::APInt(i + this->GetSize(), pow(2, i), false)), "resDiv");
-                tmp = builder.CreateIntCast(tmp, llvm::IntegerType::get(llvm::getGlobalContext(), this->GetSizeInOctet() * 8), false, "resCast");
-                tmp = builder.CreateMul(tmp, llvm::ConstantInt::get(llvm::getGlobalContext(), llvm::APInt(this->GetSizeInOctet() * 8, pow(2, (this->GetSizeInOctet() * 8) - this->GetSize()), false)), "tmp");
-                tmp = builder.CreateUDiv(tmp, llvm::ConstantInt::get(llvm::getGlobalContext(), llvm::APInt(this->GetSizeInOctet() * 8, pow(2, (this->GetSizeInOctet() * 8) - this->GetSize()), false)), "tmp");
-                builder.CreateStore(tmp, actionBlock->getValueSymbolTable()->lookup(this->GetName() + "paramAdr"));
-                builder.CreateBr(addSizeToStreamBlock);
-            }
-            sw->addCase(llvm::ConstantInt::get(llvm::getGlobalContext(), llvm::APInt(8, i, false)), caseBlock);
-        }
-        builder.SetInsertPoint(addSizeToStreamBlock);
-        llvm::Value *castStreamToInt = builder.CreatePtrToInt(i8Stream, llvm::IntegerType::get(llvm::getGlobalContext(), 64));
-        llvm::Value *addSizeToStream = builder.CreateAdd(castStreamToInt, llvm::ConstantInt::get(llvm::getGlobalContext(), llvm::APInt(64, this->GetSize() / 8, false)));
-        llvm::Value *addSizeToNbBytes = builder.CreateAdd(nbBytes, llvm::ConstantInt::get(llvm::getGlobalContext(), llvm::APInt(8, this->GetSize() % 8, false)));
-
-        llvm::Value   *nbBytesSupTo8 = builder.CreateICmpSGT(addSizeToNbBytes, llvm::ConstantInt::get(llvm::getGlobalContext(), llvm::APInt(8, 7, false)), "nbBytesSupTo8");
-	builder.CreateCondBr(nbBytesSupTo8, incStreamBlock, finalyzeBlock);
-        builder.SetInsertPoint(incStreamBlock);
-        llvm::Value   *add1ToStream = builder.CreateAdd(addSizeToStream, llvm::ConstantInt::get(llvm::getGlobalContext(), llvm::APInt(64, 1, false)));
-        llvm::Value   *add1ToNbBytes = builder.CreateSub(addSizeToNbBytes, llvm::ConstantInt::get(llvm::getGlobalContext(), llvm::APInt(8, 8, false)));
-        llvm::Value   *castIntToStream = builder.CreateIntToPtr(add1ToStream, llvm::PointerType::getUnqual(llvm::Type::getInt8Ty(llvm::getGlobalContext())), "newStream");
-        builder.CreateStore(castIntToStream, actionBlock->getValueSymbolTable()->lookup("i8StreamAdr"));
-        builder.CreateStore(add1ToNbBytes, actionBlock->getParent()->getParent()->getValueSymbolTable().lookup("_nbBytesRead"));
-        builder.CreateBr(newActionBlock);
-        builder.SetInsertPoint(finalyzeBlock);
-        castIntToStream = builder.CreateIntToPtr(addSizeToStream, llvm::PointerType::getUnqual(llvm::Type::getInt8Ty(llvm::getGlobalContext())), "newStream");
-        builder.CreateStore(castIntToStream, actionBlock->getValueSymbolTable()->lookup("i8StreamAdr"));
-        builder.CreateStore(addSizeToNbBytes, actionBlock->getParent()->getParent()->getValueSymbolTable().lookup("_nbBytesRead"));
-        builder.CreateBr(newActionBlock);
-	return (newActionBlock);
+    return (this->AddSizeToStream(streamAdr, nbBytesAdr, this->GetSize(), addSizeToStreamBlock));
 }
 
 llvm::BasicBlock*	StaticType::BuildEncodingToFile(llvm::BasicBlock *actionBlock) const

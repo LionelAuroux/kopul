@@ -17,12 +17,13 @@ namespace kpl
         Value(const StaticType &, void *);
         Value(const Value &);
         ~Value();
-        Value&  operator = (const Value &);
+        Value&              operator = (const Value &);
 
-        int             GetSize() const;
-        int             GetSizeInOctet() const;
+        int                 GetSize() const;
+        int                 GetSizeInOctet() const;
         
-        const char *    GetValue() const;
+        const char *        GetValue() const;
+        const StaticType&   GetTypeOfValue() const;
 
         // Get a string representation of the object
         virtual const std::string&  ToString() const;
