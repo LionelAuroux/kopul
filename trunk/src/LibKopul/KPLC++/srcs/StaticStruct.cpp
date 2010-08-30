@@ -9,16 +9,11 @@ StaticStruct::StaticStruct()
 }
 
 
-StaticStruct::StaticStruct(const StaticStruct& staticStruct)
+StaticStruct::StaticStruct(const StaticStruct& staticStruct) : Container<StaticType>(staticStruct)
 {
     _objectType = "StaticStruct";
     _objectToStr = _objectType + "_of_";
     SetName(staticStruct.GetName());
-    for (unsigned int i = 0; i < staticStruct._listType.size(); ++i)
-    {
-        this->_listType.push_back(static_cast<StaticType *>(staticStruct._listType[i]->Clone()));
-        this->_objectToStr += "_" + staticStruct._listType[i]->ToString();
-    }
 }
 
 StaticStruct::~StaticStruct()
@@ -32,57 +27,20 @@ StaticStruct&   StaticStruct::operator = (const StaticStruct& staticStruct)
     this->_objectType = "StaticStruct";
     this->_objectToStr = _objectType + "_of_";
     this->SetName(staticStruct.GetName());
-    for (unsigned int i = 0; i < staticStruct._listType.size(); ++i)
-    {
-        this->_listType.push_back(static_cast<StaticType *>(staticStruct._listType[i]->Clone()));
-        this->_objectToStr += "_" + staticStruct._listType[i]->ToString();
-    }
     return (*this);
 }
 
 const std::vector<StaticType *>&  StaticStruct::GetListType() const
 {
-    return (this->_listType);
-}
-
-void                            StaticStruct::Add(const StaticType& type)
-{
-    this->_listType.push_back(static_cast<StaticType *>(type.Clone()));
-    this->_objectToStr += "_" + type.ToString();
-}
-
-void                            StaticStruct::Add(const StaticType* type)
-{
-    this->_listType.push_back(static_cast<StaticType *>(type->Clone()));
-    this->_objectToStr += "_" + type->ToString();
-}
-
-StaticStruct&                   kpl::operator << (StaticStruct& staticStruct, const StaticType& type)
-{
-    staticStruct.Add(type);
-    return (staticStruct);
-}
-
-StaticStruct&                   kpl::operator << (StaticStruct& staticStruct, const StaticType * type)
-{
-    staticStruct.Add(type);
-    return (staticStruct);
-}
-
-void                            StaticStruct::Clear()
-{
-    for (unsigned int i = 0; i < this->_listType.size(); ++i)
-        delete (this->_listType[i]);
-    _objectToStr = _objectType + "_of_";
-    this->_listType.clear();
+    return (this->_list);
 }
 
 int                    StaticStruct::GetSize() const
 {
     int size = 0;
 
-    for (unsigned int i = 0; i < this->_listType.size(); ++i)
-        size += this->_listType[i]->GetSize();
+    for (unsigned int i = 0; i < this->_list.size(); ++i)
+        size += this->_list[i]->GetSize();
     return (size);
 }
 
@@ -97,8 +55,8 @@ const llvm::Type*   StaticStruct::GetLLVMType() const
 {
     std::vector<const llvm::Type*> listTypeLLVM;
 
-    for (unsigned int i = 0; i < this->_listType.size(); ++i)
-        listTypeLLVM.push_back(this->_listType[i]->GetLLVMType());
+    for (unsigned int i = 0; i < this->_list.size(); ++i)
+        listTypeLLVM.push_back(this->_list[i]->GetLLVMType());
     return (llvm::StructType::get(llvm::getGlobalContext(), listTypeLLVM));
 }
 
@@ -120,11 +78,11 @@ bool                StaticStruct::Equals(const IObject &value) const
     if (this->GetType() == value.GetType())
     {
         const std::vector<StaticType*>& listTypeOfValue = static_cast<const StaticStruct&>(value).GetListType();
-        if (this->_listType.size() != listTypeOfValue.size())
+        if (this->_list.size() != listTypeOfValue.size())
             return (false);
-        for (unsigned int i = 0; i < this->_listType.size(); ++i)
+        for (unsigned int i = 0; i < this->_list.size(); ++i)
         {
-            if (!this->_listType[i]->Equals(*listTypeOfValue[i]))
+            if (!this->_list[i]->Equals(*listTypeOfValue[i]))
                 return (false);
         }
         return (true);

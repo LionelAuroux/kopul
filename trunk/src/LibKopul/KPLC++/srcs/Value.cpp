@@ -133,6 +133,11 @@ int    Value::GetSizeInOctet() const
     return (this->_type->GetSizeInOctet());
 }
 
+const StaticType&   Value::GetTypeOfValue() const
+{
+    return (*this->_type);
+}
+
 const char      *Value::GetValue() const
 {
     return (this->_value);

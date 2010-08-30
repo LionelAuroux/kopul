@@ -22,60 +22,27 @@ Register::Register()
 
 }
 
-Register::Register(const Register&reg)
+Register::Register(const Register&reg) : Container<Type>(reg)
 {
     _moduleName = "Kopul";
-    for (unsigned int i = 0; i < reg._listType.size(); ++i)
-        this->Add(reg._listType[i]);
 }
 
 Register::~Register()
 {
-    this->Clear();
+
 }
 
-Register&   Register::operator = (const Register& reg)
+Register&   Register::operator = (const Register&)
 {
     this->_moduleName = "Kopul";
-    for (unsigned int i = 0; i < reg._listType.size(); ++i)
-        this->Add(reg._listType[i]);
     return (*this);
-}
-
-void    Register::Add(const Type& type)
-{
-    this->_listType.push_back(static_cast<Type *>(type.Clone()));
-}
-
-Register&    kpl::operator << (Register& reg, const Type& type)
-{
-    reg.Add(type);
-    return (reg);
-}
-
-void    Register::Add(const Type* type)
-{
-    this->Add(*type);
-}
-
-Register&    kpl::operator << (Register& reg, const Type* type)
-{
-    reg.Add(*type);
-    return (reg);
-}
-
-void    Register::Clear()
-{
-    for (unsigned int i = 0; i < this->_listType.size(); ++i)
-        delete (this->_listType[i]);
-    this->_listType.clear();
 }
 
 void    Register::Dump(MODE mode) const
 {
     llvm::Module    *_module;
 
-    if (this->_listType.size() == 0)
+    if (this->_list.size() == 0)
     {
         std::cout << "No type register to dump" << std::endl;
         return ;
@@ -85,8 +52,8 @@ void    Register::Dump(MODE mode) const
     llvm::GlobalVariable    *nbBytesWrite = new llvm::GlobalVariable(llvm::IntegerType::get(llvm::getGlobalContext(), 8), false, llvm::GlobalVariable::InternalLinkage, llvm::ConstantInt::get(llvm::getGlobalContext(), llvm::APInt(8, 0, false)), "_nbBytesWrite");
     _module->getGlobalList().push_back(nbBytesRead);
     _module->getGlobalList().push_back(nbBytesWrite);
-    for (unsigned int i = 0; i < this->_listType.size(); ++i)
-        this->_listType[i]->Build(_module, mode);
+    for (unsigned int i = 0; i < this->_list.size(); ++i)
+        this->_list[i]->Build(_module, mode);
     _module->dump();
     delete (_module);
 }
@@ -95,7 +62,7 @@ FunctionList<int (*)(stream, ...)> *Register::CompileInMemoryMode() const
 {
     llvm::Module    *_module;
 
-    if (this->_listType.size() == 0)
+    if (this->_list.size() == 0)
     {
         std::cout << "No type register to compile" << std::endl;
         return (NULL);
@@ -105,16 +72,16 @@ FunctionList<int (*)(stream, ...)> *Register::CompileInMemoryMode() const
     llvm::GlobalVariable    *nbBytesWrite = new llvm::GlobalVariable(llvm::IntegerType::get(llvm::getGlobalContext(), 8), false, llvm::GlobalVariable::InternalLinkage, llvm::ConstantInt::get(llvm::getGlobalContext(), llvm::APInt(8, 0, false)), "_nbBytesWrite");
     _module->getGlobalList().push_back(nbBytesRead);
     _module->getGlobalList().push_back(nbBytesWrite);
-    for (unsigned int i = 0; i < this->_listType.size(); ++i)
-        this->_listType[i]->Build(_module, MEMORY_MODE);
-    return (new FunctionList<int (*)(stream, ...)>(_module, this->_listType));
+    for (unsigned int i = 0; i < this->_list.size(); ++i)
+        this->_list[i]->Build(_module, MEMORY_MODE);
+    return (new FunctionList<int (*)(stream, ...)>(_module, this->_list));
 }
 
 FunctionList<int (*)(fd, ...)>     *Register::CompileInFileMode() const
 {
     llvm::Module    *_module;
 
-    if (this->_listType.size() == 0)
+    if (this->_list.size() == 0)
     {
         std::cout << "No type register to compile" << std::endl;
         return (NULL);
@@ -124,16 +91,16 @@ FunctionList<int (*)(fd, ...)>     *Register::CompileInFileMode() const
     llvm::GlobalVariable    *nbBytesWrite = new llvm::GlobalVariable(llvm::IntegerType::get(llvm::getGlobalContext(), 8), false, llvm::GlobalVariable::InternalLinkage, llvm::ConstantInt::get(llvm::getGlobalContext(), llvm::APInt(8, 0, false)), "_nbBytesWrite");
     _module->getGlobalList().push_back(nbBytesRead);
     _module->getGlobalList().push_back(nbBytesWrite);
-    for (unsigned int i = 0; i < this->_listType.size(); ++i)
-        this->_listType[i]->Build(_module, FILE_MODE);
-    return (new FunctionList<int (*)(fd, ...)>(_module, this->_listType));
+    for (unsigned int i = 0; i < this->_list.size(); ++i)
+        this->_list[i]->Build(_module, FILE_MODE);
+    return (new FunctionList<int (*)(fd, ...)>(_module, this->_list));
 }
 
 FunctionList<int (*)(socket, ...)> *Register::CompileInSocketMode() const
 {
     llvm::Module    *_module;
 
-    if (this->_listType.size() == 0)
+    if (this->_list.size() == 0)
     {
         std::cout << "No type register to compile" << std::endl;
         return (NULL);
@@ -143,9 +110,9 @@ FunctionList<int (*)(socket, ...)> *Register::CompileInSocketMode() const
     llvm::GlobalVariable    *nbBytesWrite = new llvm::GlobalVariable(llvm::IntegerType::get(llvm::getGlobalContext(), 8), false, llvm::GlobalVariable::InternalLinkage, llvm::ConstantInt::get(llvm::getGlobalContext(), llvm::APInt(8, 0, false)), "_nbBytesWrite");
     _module->getGlobalList().push_back(nbBytesRead);
     _module->getGlobalList().push_back(nbBytesWrite);
-    for (unsigned int i = 0; i < this->_listType.size(); ++i)
-        this->_listType[i]->Build(_module, SOCKET_MODE);
-    return (new FunctionList<int (*)(socket, ...)>(_module, this->_listType));
+    for (unsigned int i = 0; i < this->_list.size(); ++i)
+        this->_list[i]->Build(_module, SOCKET_MODE);
+    return (new FunctionList<int (*)(socket, ...)>(_module, this->_list));
 }
 
 const std::string&  Register::GetRegisterName() const

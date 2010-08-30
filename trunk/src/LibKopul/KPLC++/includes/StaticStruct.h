@@ -4,10 +4,11 @@
 # include <vector>
 
 # include "StaticType.h"
+# include "Container.h"
 
 namespace kpl
 {
-	class	StaticStruct : public StaticType
+	class	StaticStruct : public StaticType, public Container<StaticType>
 	{
 	public:
             StaticStruct();
@@ -17,11 +18,6 @@ namespace kpl
             const std::vector<StaticType *>&  GetListType() const;
             int                               GetSize() const;
             int                               GetSizeInOctet() const;
-            void                              Add(const StaticType&);
-            void                              Add(const StaticType*);
-            friend StaticStruct&              operator << (StaticStruct&, const StaticType&);
-            friend StaticStruct&              operator << (StaticStruct&, const StaticType*);
-            void                              Clear ();
 
             // Get a string representation of the object
             virtual const std::string&                ToString() const;
@@ -39,7 +35,6 @@ namespace kpl
             const llvm::Type*                 GetLLVMType() const;
 
         private:
-            std::vector<StaticType *>         _listType;
             std::string                       _objectToStr;
             std::string                       _objectType;
 	};

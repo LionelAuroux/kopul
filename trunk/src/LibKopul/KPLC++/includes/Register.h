@@ -11,6 +11,7 @@
 
 # include "FunctionList.h"
 # include "Type.h"
+# include "Container.h"
 
 namespace kpl
 {
@@ -18,18 +19,13 @@ namespace kpl
     typedef int fd;
     typedef int socket;
 
-    class Register
+    class Register : public Container<Type>
     {
     public:
         Register();
         Register(const Register&);
         ~Register();
         Register&                           operator = (const Register&);
-        void                                Add(const Type&);
-        void                                Add(const Type*);
-        friend Register&                    operator << (Register&, const Type&);
-        friend Register&                    operator << (Register&, const Type*);
-        void                                Clear();
         void                                Dump(MODE mode = MEMORY_MODE) const;
         FunctionList<int (*)(stream, ...)> *CompileInMemoryMode() const;
         FunctionList<int (*)(fd, ...)>     *CompileInFileMode() const;
@@ -39,7 +35,6 @@ namespace kpl
 
     private:
         static bool                     _llvmIsInit;
-        std::vector<Type *>             _listType;
         std::string                     _moduleName;
     };
 };
