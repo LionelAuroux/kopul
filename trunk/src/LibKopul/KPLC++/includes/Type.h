@@ -26,9 +26,9 @@ namespace kpl
     protected:
 
         // BlockOut (Stream, nbBytes, sizeInBytes, WhereToBuild)
-        llvm::BasicBlock*               AddSizeToStream(llvm::Value *streamAdr, llvm::Value *nbBytesAdr, int sizeInBytes, llvm::BasicBlock *whereToBuild) const;
-        llvm::BasicBlock*               StoreParamToStream(llvm::Value *streamAdr, llvm::Value *nbBytesAdr, llvm::Value *paramAdr, int sizeParamInBytes, llvm::BasicBlock *whereToBuild, const std::string &newBlockName = "") const;
-        llvm::BasicBlock*               LoadParamFromStream(llvm::Value *streamAdr, llvm::Value *nbBytesAdr, llvm::Value *paramAdr, int sizeParamInBytes, llvm::BasicBlock *whereToBuild, const std::string &newBlockName = "") const;
+        llvm::BasicBlock*               CreateAddSizeToStream(llvm::Value *streamAdr, llvm::Value *nbBytesAdr, int sizeInBytes, llvm::BasicBlock *whereToBuild) const;
+        llvm::BasicBlock*               CreateStoreParamToStream(llvm::Value *streamAdr, llvm::Value *nbBytesAdr, llvm::Value *paramAdr, int sizeParamInBytes, llvm::BasicBlock *whereToBuild, const std::string &newBlockName = "") const;
+        llvm::BasicBlock*               CreateLoadParamFromStream(llvm::Value *streamAdr, llvm::Value *nbBytesAdr, llvm::Value *paramAdr, int sizeParamInBytes, llvm::BasicBlock *whereToBuild, const std::string &newBlockName = "") const;
 
         // Ajoute une fonction au module
         llvm::Function*			CreateFunctionForMemory(llvm::Module *, const std::string &name, const std::map<std::string, const llvm::Type*>&) const;

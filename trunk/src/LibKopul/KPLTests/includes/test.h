@@ -8,5 +8,6 @@ bool    testBitfield();
 bool    testStaticArray();
 bool    testStaticStruct();
 bool    testValue();
+bool    testDynamicArray();
 
 #endif //__TEST__H_

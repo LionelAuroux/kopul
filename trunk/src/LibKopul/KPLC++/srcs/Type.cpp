@@ -49,7 +49,7 @@ void				Type::SetName(const std::string& name)
     this->_decodeFunctionName = "__kpl__" + this->_name + "__decode__";
 }
 
-llvm::BasicBlock*               Type::AddSizeToStream(llvm::Value *streamAdr, llvm::Value *nbBytesAdr, int sizeInBytes, llvm::BasicBlock *whereToBuild) const
+llvm::BasicBlock*               Type::CreateAddSizeToStream(llvm::Value *streamAdr, llvm::Value *nbBytesAdr, int sizeInBytes, llvm::BasicBlock *whereToBuild) const
 {
     llvm::IRBuilder<>               builder(llvm::getGlobalContext());
     llvm::BasicBlock                *finalyzeBlock = llvm::BasicBlock::Create(llvm::getGlobalContext(), "finalyze", whereToBuild->getParent());
@@ -81,7 +81,7 @@ llvm::BasicBlock*               Type::AddSizeToStream(llvm::Value *streamAdr, ll
     return (newActionBlock);
 }
 
-llvm::BasicBlock*               Type::StoreParamToStream(llvm::Value *streamAdr, llvm::Value *nbBytesAdr, llvm::Value *paramAdr, int sizeParamInBytes, llvm::BasicBlock *whereToBuild, const std::string &newBlockName) const
+llvm::BasicBlock*               Type::CreateStoreParamToStream(llvm::Value *streamAdr, llvm::Value *nbBytesAdr, llvm::Value *paramAdr, int sizeParamInBytes, llvm::BasicBlock *whereToBuild, const std::string &newBlockName) const
 {
     llvm::IRBuilder<>               builder(llvm::getGlobalContext());
     // iterator pour les basickBlocks, ont veut recuperer le 3eme (error).
@@ -148,7 +148,7 @@ llvm::BasicBlock*               Type::StoreParamToStream(llvm::Value *streamAdr,
     return (newActionBlock);
 }
 
-llvm::BasicBlock*               Type::LoadParamFromStream(llvm::Value *streamAdr, llvm::Value *nbBytesAdr, llvm::Value *paramAdr, int sizeParamInBytes, llvm::BasicBlock *whereToBuild, const std::string &newBlockName) const
+llvm::BasicBlock*               Type::CreateLoadParamFromStream(llvm::Value *streamAdr, llvm::Value *nbBytesAdr, llvm::Value *paramAdr, int sizeParamInBytes, llvm::BasicBlock *whereToBuild, const std::string &newBlockName) const
 {
     llvm::IRBuilder<>               builder(llvm::getGlobalContext());
     llvm::Function::iterator        bIterator = whereToBuild->getParent()->begin();++bIterator;++bIterator;
@@ -179,8 +179,8 @@ llvm::BasicBlock*               Type::LoadParamFromStream(llvm::Value *streamAdr
         {
             stream = builder.CreateBitCast(i8Stream, llvm::PointerType::getUnqual(llvm::IntegerType::get(llvm::getGlobalContext(), CONVERT_NBBYTES_TO_NBOCTET(sizeParamInBytes) * 8)), "stream");
             tmp = builder.CreateLoad(stream, "tmp");
-            tmp = builder.CreateMul(tmp, llvm::ConstantInt::get(llvm::getGlobalContext(), llvm::APInt(sizeParamInBytes, pow(2, (CONVERT_NBBYTES_TO_NBOCTET(sizeParamInBytes) * 8) - sizeParamInBytes), false)), "tmp");
-            readFromStream = builder.CreateUDiv(tmp, llvm::ConstantInt::get(llvm::getGlobalContext(), llvm::APInt(sizeParamInBytes, pow(2, (CONVERT_NBBYTES_TO_NBOCTET(sizeParamInBytes) * 8) - sizeParamInBytes), false)), "tmp");
+            tmp = builder.CreateMul(tmp, llvm::ConstantInt::get(llvm::getGlobalContext(), llvm::APInt(CONVERT_NBBYTES_TO_NBOCTET(sizeParamInBytes) * 8, pow(2, (CONVERT_NBBYTES_TO_NBOCTET(sizeParamInBytes) * 8) - sizeParamInBytes), false)), "tmp");
+            readFromStream = builder.CreateUDiv(tmp, llvm::ConstantInt::get(llvm::getGlobalContext(), llvm::APInt(CONVERT_NBBYTES_TO_NBOCTET(sizeParamInBytes) * 8, pow(2, (CONVERT_NBBYTES_TO_NBOCTET(sizeParamInBytes) * 8) - sizeParamInBytes), false)), "tmp");
             builder.CreateStore(readFromStream, paramAdr);
             builder.CreateBr(newActionBlock);
         }

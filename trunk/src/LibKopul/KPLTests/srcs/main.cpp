@@ -12,7 +12,8 @@ bool    V(bool isOk, const std::string& str)
 int     main()
 {
     if (V(testBitfield(), "testBitfield") && V(testStaticStruct(), "testStaticStruct")
-        && V(testStaticArray(), "testStaticArray") && V(testValue(), "testValue"))
+        && V(testStaticArray(), "testStaticArray") && V(testValue(), "testValue")
+        && V(testDynamicArray(), "testDynamicArray"))
         std::cout << "All the tests succeeded" << std::endl;
     else
         std::cout << "Some Errors occured" << std::endl;

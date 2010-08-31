@@ -143,6 +143,19 @@ const char      *Value::GetValue() const
     return (this->_value);
 }
 
+void                    Value::CreateCmp(llvm::Value *toCompare, llvm::BasicBlock *trueBlock, llvm::BasicBlock *falseBlock, llvm::BasicBlock *whereToBuild) const
+{
+    llvm::IRBuilder<>   builder(llvm::getGlobalContext());
+    builder.SetInsertPoint(whereToBuild);
+    llvm::Value         *value = llvm::ConstantInt::get(llvm::getGlobalContext(), llvm::APInt(this->_type->GetSizeInOctet() * 8, 0, false));
+
+    for (int i = 0; i < this->_type->GetSizeInOctet(); ++i)
+        value = builder.CreateAdd(value, builder.CreateMul(llvm::ConstantInt::get(llvm::getGlobalContext(), llvm::APInt(this->_type->GetSizeInOctet() * 8, (int)this->_value[i], false)), llvm::ConstantInt::get(llvm::getGlobalContext(), llvm::APInt(this->_type->GetSizeInOctet() * 8, pow(pow(2, 8), i), false))));
+    llvm::Value* cmp = builder.CreateICmpEQ(value, toCompare, "cmp");
+	// Si le nombre de bouteille est vide on passe par le block ret sinon on boit
+    builder.CreateCondBr(cmp, trueBlock, falseBlock);
+}
+
 bool                    Value::Build(llvm::Module *module, MODE mode) const
 {
     std::map<std::string, const llvm::Type *>   mapVariable;
@@ -167,20 +180,17 @@ llvm::BasicBlock*	Value::BuildEncodingToMemory(llvm::BasicBlock *actionBlock) co
 llvm::BasicBlock*	Value::BuildDecodingFromMemory(llvm::BasicBlock *actionBlock) const
 {
     llvm::IRBuilder<>   builder(llvm::getGlobalContext());
+
     builder.SetInsertPoint(actionBlock);
     llvm::Value         *bufferToStore = builder.CreateAlloca(llvm::IntegerType::get(llvm::getGlobalContext(), this->_type->GetSizeInOctet() * 8), llvm::ConstantInt::get(llvm::getGlobalContext(), llvm::APInt(32, 1, false)), this->_type->GetName() + "paramAdr");
-    llvm::Value         *value = llvm::ConstantInt::get(llvm::getGlobalContext(), llvm::APInt(this->_type->GetSizeInOctet() * 8, 0, false));
     llvm::BasicBlock    *newActionBlock = this->_type->BuildDecodingFromMemory(actionBlock);
+
     builder.SetInsertPoint(newActionBlock);
     llvm::Value         *toCompare = builder.CreateLoad(bufferToStore, "ToCompare");
+    llvm::BasicBlock    *trueBlock = llvm::BasicBlock::Create(llvm::getGlobalContext(), "action", actionBlock->getParent());
 
-    for (int i = 0; i < this->_type->GetSizeInOctet(); ++i)
-        value = builder.CreateAdd(value, builder.CreateMul(llvm::ConstantInt::get(llvm::getGlobalContext(), llvm::APInt(this->_type->GetSizeInOctet() * 8, (int)this->_value[i], false)), llvm::ConstantInt::get(llvm::getGlobalContext(), llvm::APInt(this->_type->GetSizeInOctet() * 8, pow(pow(2, 8), i), false))));
-    newActionBlock = llvm::BasicBlock::Create(llvm::getGlobalContext(), "action", actionBlock->getParent());
-    llvm::Value* cmp = builder.CreateICmpEQ(value, toCompare, "cmp");
-	// Si le nombre de bouteille est vide on passe par le block ret sinon on boit
-    builder.CreateCondBr(cmp, newActionBlock, static_cast<llvm::BasicBlock *>(actionBlock->getParent()->getValueSymbolTable().lookup("error")));
-    return (newActionBlock);
+    this->CreateCmp(toCompare, trueBlock, static_cast<llvm::BasicBlock *>(actionBlock->getParent()->getValueSymbolTable().lookup("error")), newActionBlock);
+    return (trueBlock);
 }
 
 llvm::BasicBlock*	Value::BuildEncodingToFile(llvm::BasicBlock *actionBlock) const
