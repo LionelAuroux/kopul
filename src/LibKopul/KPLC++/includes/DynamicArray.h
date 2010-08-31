@@ -29,7 +29,6 @@ namespace kpl
             IObject*            Clone() const;
         protected:
             bool                Build(llvm::Module *, MODE) const;
-            llvm::BasicBlock*   BuildCode(llvm::BasicBlock *, BUILDER_MODE) const;
             llvm::BasicBlock*   BuildEncodingToMemory(llvm::BasicBlock *) const;
             llvm::BasicBlock*   BuildDecodingFromMemory(llvm::BasicBlock *) const;
             llvm::BasicBlock*   BuildEncodingToFile(llvm::BasicBlock *) const;

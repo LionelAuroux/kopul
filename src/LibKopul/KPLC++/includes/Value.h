@@ -37,7 +37,10 @@ namespace kpl
         // create a new instance by making a deep copy of the current object data
         virtual IObject*            Clone() const;
 
+        friend class DynamicArray;
     protected:
+
+        void                    CreateCmp(llvm::Value *toCompare, llvm::BasicBlock *trueBlock, llvm::BasicBlock *falseBlock, llvm::BasicBlock *whereToBuild) const;
 
         // Build le type
         bool                    Build(llvm::Module *, MODE) const;
