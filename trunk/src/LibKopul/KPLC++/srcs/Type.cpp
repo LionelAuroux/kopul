@@ -2,7 +2,6 @@
 #include <stdexcept>
 
 #include "Type.h"
-#include "Bitfield.h"
 
 using namespace kpl;
 

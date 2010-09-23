@@ -2,31 +2,28 @@
 
 using namespace kpl;
 
-StaticStruct::StaticStruct()
+StaticStruct::StaticStruct() : _objectToStr(new std::string())
 {
     _objectType = "StaticStruct";
-    _objectToStr = _objectType + "_of_";
 }
 
 
-StaticStruct::StaticStruct(const StaticStruct& staticStruct) : Container<StaticType>(staticStruct)
+StaticStruct::StaticStruct(const StaticStruct& staticStruct) : Container<StaticType>(staticStruct), _objectToStr(new std::string())
 {
     _objectType = "StaticStruct";
-    _objectToStr = _objectType + "_of_";
     SetName(staticStruct.GetName());
 }
 
 StaticStruct::~StaticStruct()
 {
-    this->Clear();
+    delete (this->_objectToStr);
 }
 
-StaticStruct&   StaticStruct::operator = (const StaticStruct& staticStruct)
+StaticStruct&   StaticStruct::operator = (const StaticStruct& old)
 {
-    this->Clear();
-    this->_objectType = "StaticStruct";
-    this->_objectToStr = _objectType + "_of_";
-    this->SetName(staticStruct.GetName());
+    this->SetName(old.GetName());
+    *this->_objectToStr = *old._objectToStr;
+    static_cast<Container<StaticType>& >(*this) = static_cast<const Container<StaticType>& >(old);
     return (*this);
 }
 
@@ -63,7 +60,11 @@ const llvm::Type*   StaticStruct::GetLLVMType() const
 // Get a string representation of the object
 const std::string&  StaticStruct::ToString() const
 {
-    return (this->_objectToStr);
+    *this->_objectToStr = this->_objectType + "\n{\n";
+    for (unsigned int i = 0; i < this->_list.size(); ++i)
+        *this->_objectToStr += this->_list[i]->ToString() + "\n";
+    *this->_objectToStr += "}";
+    return (*this->_objectToStr);
 }
 
 // Get the type of the object

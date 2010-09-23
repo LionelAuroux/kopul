@@ -15,15 +15,18 @@ namespace kpl
         Value(const StaticType &, const std::string&);
         Value(const StaticType &, char *);
         Value(const StaticType &, void *);
+        Value(const Type &type, const void *value, int sizeInBytes);
         Value(const Value &);
         ~Value();
         Value&              operator = (const Value &);
 
         int                 GetSize() const;
         int                 GetSizeInOctet() const;
-        
+
+        virtual llvm::Value *GetLLVMValue(llvm::BasicBlock *) const;
+
         const char *        GetValue() const;
-        const StaticType&   GetTypeOfValue() const;
+        const Type&         GetTypeOfValue() const;
 
         // Get a string representation of the object
         virtual const std::string&  ToString() const;
@@ -51,12 +54,10 @@ namespace kpl
         llvm::BasicBlock*	BuildEncodingToSocket(llvm::BasicBlock *) const;
         llvm::BasicBlock*	BuildDecodingFromSocket(llvm::BasicBlock *) const;
 
-        // retourne le type equivalent en LLVM a un StaticType de KOPUL
-        const llvm::Type*       GetLLVMType() const;
-
-    private:
+        int             _sizeInBytes;
         char            *_value;
-        StaticType      *_type;
+        Type            *_type;
+    private:
         std::string     _objectToStr;
         std::string     _objectType;
     };

@@ -9,5 +9,6 @@ bool    testStaticArray();
 bool    testStaticStruct();
 bool    testValue();
 bool    testDynamicArray();
+bool    testSwitch();
 
 #endif //__TEST__H_

@@ -5,7 +5,8 @@ SRC		=	srcs/main.cpp			\
 			srcs/testStaticArray.cpp	\
 			srcs/testStaticStruct.cpp	\
 			srcs/testValue.cpp		\
-			srcs/testDynamicArray.cpp
+			srcs/testDynamicArray.cpp	\
+			srcs/testSwitch.cpp
 OBJ		=	$(SRC:.cpp=.o)
 RM		=	rm -f
 INCFLAGS	=	-I../KPLC++/includes -I./includes/

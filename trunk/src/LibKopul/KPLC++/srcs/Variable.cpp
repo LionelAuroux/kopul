@@ -2,108 +2,106 @@
 
 using namespace kpl;
 
-Variable::Variable(int size)
+Variable::Variable(const std::string &name, const StaticType *type) : Value(*type, 0)
 {
-    _type = NULL;
-    _buf = new char[size];
-    _bufSize = size;
     _objectType = "Variable";
-    _objectToStr = _objectType;
+    _objectToStr = _objectType + "_of_type_" + type->ToString();
+    _variableName = name;
 }
 
-Variable::Variable(const Type *type, int size)
+Variable::Variable(const std::string &name, const StaticType &type) : Value(type, 0)
 {
-    _type = static_cast<Type *>(type->Clone());
-    _buf = new char[size];
-    _bufSize = size;
     _objectType = "Variable";
-    _objectToStr = _objectType + " of " + type->ToString();
+    _objectToStr = _objectType + "_of_type_" + type.ToString();
+    _variableName = name;
 }
 
-Variable::Variable(const Type &type, int size)
+Variable::Variable(const std::string &name, const Type *type, int sizeInBytes) : Value(*type, "", sizeInBytes)
 {
-    _type = static_cast<Type *>(type.Clone());
-    _buf = new char[size];
-    _bufSize = 0;
     _objectType = "Variable";
-    _objectToStr = _objectType + " of " + type.ToString();
+    _objectToStr = _objectType + "_of_type_" + type->ToString();
+    _variableName = name;
 }
 
-Variable::Variable(const Variable& var)
+Variable::Variable(const std::string &name, const Type &type, int sizeInBytes) : Value(type, "", sizeInBytes)
 {
-    _type = static_cast<Type *>(var._type->Clone());
-    _bufSize = var._bufSize;
-    _buf = new char[_bufSize];
-    memcpy(_buf, var._buf, _bufSize);
     _objectType = "Variable";
-    _objectToStr = _objectType + " of " + var._type->ToString();
+    _objectToStr = _objectType + "_of_type_" + type.ToString();
+    _variableName = name;
+}
+
+Variable::Variable(const Variable& var) : Value(var)
+{
+    _objectType = var._objectType;
+    _objectToStr = var._objectToStr;
+    _variableName = var._variableName;
 }
 
 Variable::~Variable()
 {
-    delete (this->_type);
-    delete (this->_buf);
+
 }
 
-Variable&   Variable::operator = (const Variable& var)
+char* Variable::operator *()
 {
-    delete (this->_type);
-    delete (this->_buf);
-    _type = static_cast<Type *>(var._type->Clone());
-    _bufSize = var._bufSize;
-    _buf = new char[_bufSize];
-    memcpy(_buf, var._buf, _bufSize);
-   _objectToStr = _objectType + " of " + var._type->ToString();
-   return (*this);
+    return (this->_value);
 }
 
-const Type& Variable::GetKPLType() const
+char* Variable::GetValue()
 {
-    return (*this->_type);
+    return (this->_value);
 }
 
-void        Variable::SetType(const Type& type)
+void Variable::Set(const void *value, int sizeInBytes)
 {
-    this->_type = static_cast<Type *>(type.Clone());
-    _objectToStr = _objectType + " of " + type.ToString();
+    if (this->_sizeInBytes < sizeInBytes)
+    {
+        delete (this->_value);
+        this->_value = new char[CONVERT_NBBYTES_TO_NBOCTET(sizeInBytes) + 1];
+        this->_value[CONVERT_NBBYTES_TO_NBOCTET(sizeInBytes)] = 0;
+    }
+    memcpy(this->_value, value, CONVERT_NBBYTES_TO_NBOCTET(sizeInBytes));
 }
 
-void        Variable::SetType(const Type* type)
+void                Variable::SetVariableName(const std::string &variableName)
 {
-    this->_type = static_cast<Type *>(type->Clone());
-    _objectToStr = _objectType + " of " + type->ToString();
+    this->_variableName = variableName;
 }
 
-char*       Variable::Value()
+const std::string   &Variable::GetVariableName() const
 {
-    return (this->_buf);
+    return (this->_variableName);
+}
+
+llvm::Value         *Variable::GetLLVMValue(llvm::BasicBlock *actionBlock) const
+{
+    return (actionBlock->getParent()->getValueSymbolTable().lookup(this->_variableName.c_str()));
 }
 
 // Get a string representation of the object
-const std::string&  Variable::ToString() const
+const std::string& Variable::ToString() const
 {
     return (this->_objectToStr);
 }
 
 // Get the type of the object
-const std::string&  Variable::GetType() const
+const std::string& Variable::GetType() const
 {
     return (this->_objectType);
 }
 
 // returns true if the given type and content are equal.
-bool                Variable::Equals(const IObject &value) const
+bool Variable::Equals(const IObject &value) const
 {
-    if (this->_objectToStr == value.ToString())
-    {
-        if (this->_bufSize == static_cast<const Variable&>(value)._bufSize && strncmp(this->_buf, static_cast<const Variable&>(value)._buf, this->_bufSize))
-            return (true);
-    }
+    if (this->GetType() == value.GetType() &&
+        this->_sizeInBytes == static_cast<const Variable &>(value)._sizeInBytes
+        && strncmp(this->_value, static_cast<const Variable &>(value)._value, CONVERT_NBBYTES_TO_NBOCTET(this->_sizeInBytes)) == 0)
+        return (true);
     return (false);
 }
 
 // create a new instance by making a deep copy of the current object data
-IObject*            Variable::Clone() const
+IObject* Variable::Clone() const
 {
     return (new Variable(*this));
 }

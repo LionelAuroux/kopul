@@ -32,12 +32,6 @@ Register::~Register()
 
 }
 
-Register&   Register::operator = (const Register&)
-{
-    this->_moduleName = "Kopul";
-    return (*this);
-}
-
 void    Register::Dump(MODE mode) const
 {
     llvm::Module    *_module;

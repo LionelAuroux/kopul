@@ -14,7 +14,7 @@ namespace kpl
             StaticStruct();
             StaticStruct(const StaticStruct&);
             ~StaticStruct();
-            StaticStruct&                     operator = (const StaticStruct&);
+            StaticStruct&   operator = (const StaticStruct&);
             const std::vector<StaticType *>&  GetListType() const;
             int                               GetSize() const;
             int                               GetSizeInOctet() const;
@@ -35,7 +35,7 @@ namespace kpl
             const llvm::Type*                 GetLLVMType() const;
 
         private:
-            std::string                       _objectToStr;
+            std::string                       *_objectToStr;
             std::string                       _objectType;
 	};
 };
