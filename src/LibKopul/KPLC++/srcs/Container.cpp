@@ -8,6 +8,7 @@
 #include "Type.h"
 #include "Container.h"
 #include "StaticType.h"
+#include "Switch.h"
 
 using namespace kpl;
 
@@ -18,7 +19,7 @@ Container<T>::Container()
 }
 
 template <typename T>
-Container<T>::Container(const Container& orig)
+Container<T>::Container(const Container<T>& orig)
 {
     for (unsigned int i = 0; i < orig._list.size(); ++i)
         this->Add(orig._list[i]);
@@ -31,10 +32,11 @@ Container<T>::~Container()
 }
 
 template <typename T>
-Container<T>&          Container<T>::operator = (const Container& old)
+Container<T>&          Container<T>::operator = (const Container<T>& old)
 {
     for (unsigned int i = 0; i < old._list.size(); ++i)
         this->Add(old._list[i]);
+    std::cout << this->_list.size() << "  " << old._list.size() << std::endl;
     return (*this);
 }
 
@@ -74,3 +76,4 @@ Container<T>&   Container<T>::operator << (const T* toAdd)
 
 template class Container<Type>;
 template class Container<StaticType>;
+template class Container<SwitchCondition>;

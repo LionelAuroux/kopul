@@ -22,7 +22,7 @@ namespace kpl
 	const std::string&		GetName() const;
 	void				SetName(const std::string&);
         friend class Register;
-
+        friend class Value;
     protected:
 
         // BlockOut (Stream, nbBytes, sizeInBytes, WhereToBuild)

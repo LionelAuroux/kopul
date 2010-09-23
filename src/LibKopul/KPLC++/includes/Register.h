@@ -25,7 +25,6 @@ namespace kpl
         Register();
         Register(const Register&);
         ~Register();
-        Register&                           operator = (const Register&);
         void                                Dump(MODE mode = MEMORY_MODE) const;
         FunctionList<int (*)(stream, ...)> *CompileInMemoryMode() const;
         FunctionList<int (*)(fd, ...)>     *CompileInFileMode() const;

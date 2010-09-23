@@ -3,45 +3,57 @@
 # include <vector>
 # include <string>
 
-# include "Type.h"
-# include "IObject.h"
+# include "Value.h"
 
 namespace kpl
 {
-	class	Variable : public IObject
+	class	Variable : public Value
 	{
         public:
-            Variable(int size = 1024);
-            Variable(const Type *, int size = 1024);
-            Variable(const Type &, int size = 1024);
+            Variable(const std::string &name, const StaticType *);
+            Variable(const std::string &name, const StaticType &);
+            Variable(const std::string &name, const Type *, int sizeInBytes = 8192);
+            Variable(const std::string &name, const Type &, int sizeInBytes = 8192);
             Variable(const Variable&);
             ~Variable();
-            Variable&   operator = (const Variable&);
 
+            char*               operator * ();
+            char*               GetValue();
 
-            const Type& GetKPLType() const;
-            void        SetType(const Type&);
-            void        SetType(const Type*);
-            char*       Value();
+            template <typename T>
+            T                   Get() const
+            {
+                return (*((T *)this->_value));
+            }
+
+            template <typename T>
+            void                Set(T value)
+            {
+                *((T *)this->_value) = value;
+            }
+
+            void                Set(const void *value, int sizeInBytes);
+
+            void                SetVariableName(const std::string &variableName);
+            const std::string   &GetVariableName() const;
+
+            llvm::Value         *GetLLVMValue(llvm::BasicBlock *) const;
 
             // Get a string representation of the object
-            virtual const std::string&  ToString() const;
+            const std::string&  ToString() const;
 
             // Get the type of the object
-            virtual const std::string&  GetType() const;
+            const std::string&  GetType() const;
 
             // returns true if the given type and content are equal.
-            virtual bool                Equals(const IObject &value) const;
+            bool                Equals(const IObject &value) const;
 
             // create a new instance by making a deep copy of the current object data
-            virtual IObject*            Clone() const;
+            IObject*            Clone() const;
         protected:
 
         private:
-            std::string             _name;
-            char                    *_buf;
-            int                     _bufSize;
-            Type                    *_type;
+            std::string             _variableName;
             std::string             _objectToStr;
             std::string             _objectType;
 	};

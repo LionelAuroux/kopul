@@ -10,11 +10,12 @@ SRC		=	srcs/Type.cpp			\
 			srcs/Switch.cpp			\
 			srcs/StaticStruct.cpp		\
 			srcs/StaticType.cpp		\
-			srcs/Expression.cpp		\
-			srcs/ExpressionBuilder.cpp	\
+			srcs/Condition.cpp		\
+			srcs/ConditionNode.cpp		\
 			srcs/Register.cpp		\
 			srcs/FunctionList.cpp		\
-			srcs/Container.cpp
+			srcs/Container.cpp		\
+			srcs/SwitchCondition.cpp
 
 OBJDIR		=	objs
 OBJ		=	$(SRC:.cpp=.o)
