@@ -15,7 +15,9 @@ SRC		=	srcs/Type.cpp			\
 			srcs/Register.cpp		\
 			srcs/FunctionList.cpp		\
 			srcs/Container.cpp		\
-			srcs/SwitchCondition.cpp
+			srcs/SwitchCondition.cpp	\
+			srcs/ConstantValue.cpp		\
+			srcs/VariableIterator.cpp
 
 OBJDIR		=	objs
 OBJ		=	$(SRC:.cpp=.o)

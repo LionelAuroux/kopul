@@ -6,16 +6,17 @@
  */
 
 #include "Condition.h"
+#include "ConstantValue.h"
 
 using namespace kpl;
 
 Condition::Condition(cmpMptr fptr, const Value &LHS, const Value &RHS, const std::string &cmp)
 {
     _objectType = "Condition";
-    _objectToStr = _objectType + ":" + LHS.ToString() + cmp + RHS.ToString();
+    _objectToStr = _objectType + "_" + LHS.ToStr() + cmp + RHS.ToStr();
     _fptr = fptr;
-    _LHS = static_cast<Value *>(LHS.Clone());
-    _RHS = static_cast<Value *>(RHS.Clone());
+    _LHS = LHS.Duplicate();
+    _RHS = RHS.Duplicate();
 }
 
 Condition::Condition(const Condition& orig)
@@ -23,14 +24,14 @@ Condition::Condition(const Condition& orig)
     _objectType = orig._objectType;
     _objectToStr = orig._objectToStr;
     _fptr = orig._fptr;
-    _LHS = static_cast<Value *>(orig._LHS->Clone());
-    _RHS = static_cast<Value *>(orig._RHS->Clone());
+    _LHS = orig._LHS->Duplicate();
+    _RHS = orig._RHS->Duplicate();
 }
 
 Condition::~Condition()
 {
-    delete (this->_LHS);
-    delete (this->_RHS);
+    //delete (this->_LHS);
+    //delete (this->_RHS);
 }
 
 Condition   &Condition::operator = (const Condition &old)
@@ -38,19 +39,22 @@ Condition   &Condition::operator = (const Condition &old)
     this->_objectType = old._objectType;
     this->_objectToStr = old._objectToStr;
     this->_fptr = old._fptr;
-    this->_LHS = static_cast<Value *>(old._LHS->Clone());
-    this->_RHS = static_cast<Value *>(old._RHS->Clone());
+    delete (this->_LHS);
+    delete (this->_RHS);
+    this->_LHS = old._LHS->Duplicate();
+    this->_RHS = old._RHS->Duplicate();
     return (*this);
 }
 
 std::vector<const Variable *> Condition::GetVariables() const
 {
-    std::vector<const Variable *> victor;
+    std::vector<const Variable *>   victor;
+    const Variable                  *var;
 
-    if (this->_LHS->GetType() == "Variable")
-        victor.push_back(static_cast<const Variable *>(this->_LHS));
-    if (this->_RHS->GetType() == "Variable")
-        victor.push_back(static_cast<const Variable *>(this->_RHS));
+    if ((var = dynamic_cast<const Variable *>(this->_LHS)) != NULL)
+        victor.push_back(var);
+    if ((var = dynamic_cast<const Variable *>(this->_RHS)) != NULL)
+        victor.push_back(var);
     return (victor);
 }
 
@@ -72,7 +76,7 @@ bool                Condition::Equals(const IObject &value) const
     if (this->GetType() == value.GetType())
     {
         const Condition&  cond = static_cast<const Condition&>(value);
-        if (this->_LHS->Equals(*cond._LHS) && this->_RHS->Equals(*cond._RHS) && this->_fptr == cond._fptr)
+        if (this->_LHS->ToStr() == cond._LHS->ToStr() && this->_RHS->ToStr() == cond._RHS->ToStr() && this->_fptr == cond._fptr)
             return (true);
     }
     return (false);
@@ -84,7 +88,7 @@ IObject*            Condition::Clone() const
     return (new Condition(*this));
 }
 
-void        Condition::BuildCode(llvm::BasicBlock *actionBlock, llvm::BasicBlock *trueBlock, llvm::BasicBlock *falseBlock) const
+void                Condition::BuildCondition(llvm::BasicBlock *actionBlock, llvm::BasicBlock *trueBlock, llvm::BasicBlock *falseBlock) const
 {
     llvm::IRBuilder<>   builder(llvm::getGlobalContext());
 
@@ -93,88 +97,39 @@ void        Condition::BuildCode(llvm::BasicBlock *actionBlock, llvm::BasicBlock
     builder.CreateCondBr(cmp, trueBlock, falseBlock);
 }
 
-/*
-Condition       &kpl::operator == (const Value & LHS, const Value & RHS)
-{
-    //  icmp eq
-    Condition   *newCondition = new Condition(&llvm::IRBuilder<>::CreateICmpEQ, LHS, RHS, "==");
-
-    return (*newCondition);
-}
-
-Condition       &kpl::operator != (const Value &LHS, const Value &RHS)
-{
-    //  icmp ne
-    Condition   *newCondition = new Condition(&llvm::IRBuilder<>::CreateICmpNE, LHS, RHS, "!=");
-
-    return (*newCondition);
-}
-
-Condition       &kpl::operator <= (const Value &LHS, const Value &RHS)
-{
-    //  icmp sle
-    Condition   *newCondition = new Condition(&llvm::IRBuilder<>::CreateICmpSLE, LHS, RHS, "<=");
-
-    return (*newCondition);
-}
-
-Condition       &kpl::operator >= (const Value &LHS, const Value &RHS)
-{
-    //  icmp sge
-    Condition   *newCondition = new Condition(&llvm::IRBuilder<>::CreateICmpSGE, LHS, RHS, ">=");
-
-    return (*newCondition);
-}
-
-Condition       &kpl::operator < (const Value &LHS, const Value &RHS)
-{
-    //  icmp slt
-    Condition   *newCondition = new Condition(&llvm::IRBuilder<>::CreateICmpSLT, LHS, RHS, "<");
-
-    return (*newCondition);
-}
-
-Condition       &kpl::operator > (const Value &LHS, const Value &RHS)
-{
-    //  icmp sgt
-    Condition   *newCondition = new Condition(&llvm::IRBuilder<>::CreateICmpSGT, LHS, RHS, ">");
-
-    return (*newCondition);
-}
-*/
 
 Condition       kpl::operator == (const Value & LHS, const Value & RHS)
 {
     //  icmp eq
-    return (Condition(&llvm::IRBuilder<>::CreateICmpEQ, LHS, RHS, "=="));
+    return (Condition(&llvm::IRBuilder<>::CreateICmpEQ, LHS, RHS, "_EQ_"));
 }
 
 Condition       kpl::operator != (const Value &LHS, const Value &RHS)
 {
     //  icmp ne
-    return (Condition(&llvm::IRBuilder<>::CreateICmpNE, LHS, RHS, "!="));
+    return (Condition(&llvm::IRBuilder<>::CreateICmpNE, LHS, RHS, "_NE_"));
 }
 
 Condition       kpl::operator <= (const Value &LHS, const Value &RHS)
 {
     //  icmp sle
-    return (Condition(&llvm::IRBuilder<>::CreateICmpSLE, LHS, RHS, "<="));
+    return (Condition(&llvm::IRBuilder<>::CreateICmpSLE, LHS, RHS, "_SLE_"));
 }
 
 Condition       kpl::operator >= (const Value &LHS, const Value &RHS)
 {
     //  icmp sge
-    return (Condition(&llvm::IRBuilder<>::CreateICmpSGE, LHS, RHS, ">="));
+    return (Condition(&llvm::IRBuilder<>::CreateICmpSGE, LHS, RHS, "_SGE_"));
 }
 
 Condition       kpl::operator < (const Value &LHS, const Value &RHS)
 {
     //  icmp slt
-    return (Condition(&llvm::IRBuilder<>::CreateICmpSLT, LHS, RHS, "<"));
+    return (Condition(&llvm::IRBuilder<>::CreateICmpSLT, LHS, RHS, "_SLT_"));
 }
 
 Condition       kpl::operator > (const Value &LHS, const Value &RHS)
 {
     //  icmp sgt
-    return (Condition(&llvm::IRBuilder<>::CreateICmpSGT, LHS, RHS, ">"));
+    return (Condition(&llvm::IRBuilder<>::CreateICmpSGT, LHS, RHS, "_SGT_"));
 }

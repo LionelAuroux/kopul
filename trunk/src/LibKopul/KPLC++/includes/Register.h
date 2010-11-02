@@ -33,6 +33,7 @@ namespace kpl
         void                                SetRegisterName(const std::string&);
 
     private:
+        llvm::Module                        *BuildModule(MODE mode) const;
         static bool                     _llvmIsInit;
         std::string                     _moduleName;
     };

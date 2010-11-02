@@ -1,4 +1,6 @@
 #include "test.h"
+#include "Variable.h"
+#include "VariableIterator.h"
 #include "Bitfield.h"
 #include "Value.h"
 #include "Register.h"
@@ -10,111 +12,126 @@ namespace NamespaceTestDynamicArray
 {
     bool test1()
     {
-        //Creation d'un module
-        Register        reg;
         Bitfield        bit8(8);
-        Value           endVal(bit8, '\n');
-        DynamicArray    array(endVal);
+        ConstantValue   end(bit8, '\0');
+        Variable        lastBytes("LastBytes", bit8, true);
+        DynamicArray    array((end != lastBytes, bit8), 50);
+        Variable        var("MyVar", array);
+        Variable        var2(var);
+        std::string     str = "coucou comment ca va?";
+        unsigned int    i;
+        char            *test = new char[50];
+        char            *tmp;
+        Register        reg;
 
-        // Construction du register
-        array.SetName("String");
+        for (i = 0; str[i]; ++i)
+            var[i].Set(str[i]);
+        var[i].Set(str[i]);
+
         reg << array;
+        std::cout << "test1" << std::endl;
         reg.Dump();
 
+        std::cout << "test2" << std::endl;
         // Compile les fonctions
         FunctionList<int (*)(stream, ...)> &listFunction = *reg.CompileInMemoryMode();
         // Utilisation des fonctions
 
-
-        // TEST1
-        char    *test = new char[10];
-        char    *tmp = test;
-        char    param[] = "coucou\n";
-        char    param2[8];
-
-        tmp[9] = 0;
-        std::cout << "On veut set dans le buffer   : " << param << std::endl;
-        std::cout << "Valeur initiale du buffer    : " << test << std::endl;
-
-        listFunction[array][ENCODE](&test, param);
-        std::cout << "Valeur set par la fonction : " << tmp << std::endl;
-        if (strncmp(param, tmp, strlen(param)) != 0)
-            return (false);
-
-
+        tmp = test;
+        listFunction[array].encode(&test, *var);
         test = tmp;
-        param2[7] = 0;
-        listFunction[array].decode(&test, param2);
-        std::cout << "Valeur read par la fonctions: " << param2 << std::endl;
-        if (strcmp(param, param2) != 0)
+        if (strcmp(test, str.c_str()) != 0)
             return (false);
+        std::cout << test << std::endl;
+        listFunction[array].decode(&test, *var2);
+        i = 0;
+        test = tmp;
+        for (i = 0; str[i]; ++i)
+        {
+            std::cout << var2[i].Get<char>();
+            if (var2[i].Get<char>() != test[i])
+                return (false);
+        }
+        std::cout << std::endl;
+        delete (test);
         return (true);
     }
 
     typedef struct  s_test
     {
-        int         test1 : 4;
-        int         test2 : 4;
-        int         test3 : 4;
-        int         test4 : 4;
-        int         test5 : 4;
-        int         test6 : 4;
-        int         test7 : 4;
-        int         test8 : 4;
+        char    test1 : 4;
+        char    test2 : 4;
+        char    test3 : 4;
+        char    test4 : 4;
+        char    test5 : 4;
+        char    test6 : 4;
+        char    test7 : 4;
+        char    test8 : 4;
+        char    test9 : 4;
+        char    test10 : 4;
+        char    test11 : 4;
+        char    test12 : 4;
+        char    test13 : 4;
+        char    test14 : 4;
+        char    test15 : 4;
+        char    test16 : 4;
     }               t_test;
-
-    std::ostream&   operator << (std::ostream &flux, t_test test)
-    {
-        flux << test.test1 << " " << test.test2 << " " << test.test3 << " "
-                  << test.test4 << " " << test.test5 << " "
-                  << test.test6 << " " << test.test7 << " " << test.test8 << " ";
-        return (flux);
-    }
 
     bool test2()
     {
-        //Creation d'un module
-        Register        reg;
         Bitfield        bit4(4);
-        Value           endVal(bit4, '\0');
-        DynamicArray    array(endVal);
+        ConstantValue   zero(bit4, 0);
+        ConstantValue   one(bit4, 1);
+        ConstantValue   two(bit4, 2);
+        Variable        lastBytes("LastBytes", bit4, true);
+        SwitchCondition sCond = ((lastBytes > two || (lastBytes >= one && lastBytes <= two)), bit4);
+        DynamicArray    array(sCond, 50);
+        Variable        var("MyVar", array);
+        Variable        var2(var);
+        unsigned int    i;
+        t_test          *test = new t_test[5];
+        t_test          *tmp;
+        t_test          list = {4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 3, 3, 3, 2, 1, 0};
+        Register        reg;
 
-        // Construction du register
-        array.SetName("i4_dynamic_array");
+        for (i = 0; i < 10; ++i)
+            var[i].Set((char)4);
+        for (; i < 13; ++i)
+            var[i].Set((char)3);
+        var[i].Set((char) 2);
+        var[i + 1].Set((char) 1);
+        var[i + 2].Set((char) 0);
+
         reg << array;
+        std::cout << "test1" << std::endl;
         reg.Dump();
 
+        std::cout << "test2" << std::endl;
         // Compile les fonctions
         FunctionList<int (*)(stream, ...)> &listFunction = *reg.CompileInMemoryMode();
         // Utilisation des fonctions
 
-
-        // TEST1
-        t_test  *test = new t_test[5];
-        t_test  *tmp = test;
-        t_test  param[] = {{1, 2, 1, 2, 1, 2, 1, 1}, {1, 2, 1, 2, 0, 2, 1, 1}};
-        t_test  param2[2];
-
-        test[1].test6 = 0;
-        test[1].test7 = 0;
-        test[1].test8 = 0;
-        std::cout << "On veut set dans le buffer   : " << param[0] << " " << param[1] << std::endl;
-        std::cout << "Valeur initiale du buffer    : " << test[0] << " " << test[1] << std::endl;
-
-        listFunction[array][ENCODE]((char **)&test, param);
-        std::cout << "Valeur set par la fonction : " << tmp[0] << " " << tmp[1] << std::endl;
-        if (strncmp((char *)&param, (char *)tmp, 5) != 0)
-            return (false);
-
-
+        tmp = test;
+        listFunction[array].encode((char **)&test, *var);
         test = tmp;
-        param[1].test6 = 0;
-        param[1].test7 = 0;
-        param[1].test8 = 0;
-        listFunction[array].decode((char **)&test, param2);
-        std::cout << "Valeur read par la fonctions: " << param2[0] << " " << param2[1] << std::endl;
-        if (strncmp((char *)param, (char *)param2, 5) != 0)
+        std::cout << (int)tmp->test1 << (int)tmp->test2 << (int)tmp->test3 << (int)tmp->test4
+                  << (int)tmp->test5 << (int)tmp->test6 << (int)tmp->test7 << (int)tmp->test8
+                  << (int)tmp->test9 << (int)tmp->test10 << (int)tmp->test11 << (int)tmp->test12
+                  << (int)tmp->test13 << (int)tmp->test14 << (int)tmp->test15 << (int)tmp->test16
+                  << std::endl;
+        if (strncmp((char *)test, (char *)&list, 8) != 0)
             return (false);
+        listFunction[array].decode((char **)&test, *var2);
+        i = 0;
+        test = tmp;
+        for (i = 0; i < 16; ++i)
+        {
+            std::cout << (int)var2[i].Get<char>() << ' ';
+            //if (var2[i].Get<char>() != var[i].Get<char>())
+                //return (false);
+        }
+        std::cout << std::endl;
+        delete (tmp);
         return (true);
     }
 

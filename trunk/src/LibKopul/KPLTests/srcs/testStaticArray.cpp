@@ -17,8 +17,6 @@ namespace NamespaceTestStaticArray
         StaticArray     array(bit8, 7);
 
         // Construction du register
-        bit5.SetName("i5");
-        array.SetName("arrayi8X7");
         reg << bit5 << array;
         reg.Dump();
 

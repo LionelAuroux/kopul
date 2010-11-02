@@ -24,7 +24,6 @@ StaticArray::StaticArray(const StaticArray& array)
     _objectType = "StaticArray";
     oss << _size;
     _objectToStr = _objectType + "_of_" + oss.str() + "_" + _staticType->ToString();
-    SetName(array.GetName());
 }
 
 StaticArray::~StaticArray()
@@ -37,7 +36,6 @@ StaticArray&    StaticArray::operator = (const StaticArray& array)
     delete (this->_staticType);
     this->_staticType = static_cast<StaticType *>(array._staticType->Clone());
     this->_size = array._size;
-    this->SetName(array.GetName());
     return (*this);
 }
 
@@ -51,11 +49,6 @@ int             StaticArray::GetSizeInOctet() const
     if (this->GetSize() % 8 > 0)
         return (this->GetSize() / 8 + 1);
     return (this->GetSize() / 8);
-}
-
-const llvm::Type*   StaticArray::GetLLVMType() const
-{
-    return (llvm::ArrayType::get(this->_staticType->GetLLVMType(), this->_size));
 }
 
 // Get a string representation of the object

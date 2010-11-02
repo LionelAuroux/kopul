@@ -271,11 +271,11 @@ llvm::Function*			Type::CreateFunction(llvm::Module* module, const std::string& 
     return ((this->*this->_functionBuilderMap.find(mode)->second)(module, name, mapVariable));
 }
 
-llvm::BasicBlock*               Type::BuildCode(llvm::BasicBlock *actionBlock, BUILDER_MODE builder_mode) const
+llvm::BasicBlock*               Type::BuildCode(llvm::BasicBlock *actionBlock, llvm::Value *streamAdr, llvm::Value *nbBytesAdr, llvm::Value *paramAdr, BUILDER_MODE builder_mode) const
 {
     if (this->_codeBuilderMap.find(builder_mode) == this->_codeBuilderMap.end())
         throw (std::logic_error("Unknown Builder Mode"));
-    return ((this->*this->_codeBuilderMap.find(builder_mode)->second)(actionBlock));
+    return ((this->*this->_codeBuilderMap.find(builder_mode)->second)(actionBlock, streamAdr, nbBytesAdr, paramAdr));
    
 }
 
@@ -286,8 +286,8 @@ bool			Type::BuildFunctions(llvm::Module *module,const std::map<std::string, con
 
     if (this->_modeMap.find(mode) == this->_modeMap.end())
         throw (std::logic_error("Unknow mode"));
-    llvm::BasicBlock    *encodeActionBlockEnd = this->BuildCode(++encodeFunction->begin(), this->_modeMap.find(mode)->second.first);
-    llvm::BasicBlock    *decodeActionBlockEnd = this->BuildCode(++decodeFunction->begin(), this->_modeMap.find(mode)->second.second);
+    llvm::BasicBlock    *encodeActionBlockEnd = this->BuildCode(++encodeFunction->begin(), encodeFunction->getValueSymbolTable().lookup("i8StreamAdr"), module->getValueSymbolTable().lookup("_nbBytesWrite"), encodeFunction->getValueSymbolTable().lookup(this->GetName()), this->_modeMap.find(mode)->second.first);
+    llvm::BasicBlock    *decodeActionBlockEnd = this->BuildCode(++decodeFunction->begin(), decodeFunction->getValueSymbolTable().lookup("i8StreamAdr"), module->getValueSymbolTable().lookup("_nbBytesRead"), decodeFunction->getValueSymbolTable().lookup(this->GetName()), this->_modeMap.find(mode)->second.second);
 
     llvm::IRBuilder<> builder(llvm::getGlobalContext());
     builder.SetInsertPoint(encodeActionBlockEnd);

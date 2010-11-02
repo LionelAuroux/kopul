@@ -8,10 +8,11 @@
 #ifndef _CONDITIONNODE_H
 # define _CONDITIONNODE_H
 # include <vector>
+# include "ICondition.h"
 # include "Condition.h"
 # include "IObject.h"
 
-# define CONVERT_OP_TO_STRING(x) ((x == 1) ? "&&" : (x == 2) ? "||" : "")
+# define CONVERT_OP_TO_STRING(x) ((x == 1) ? "_AND_" : (x == 2) ? "_OR_" : "")
 
 namespace kpl
 {
@@ -22,15 +23,16 @@ namespace kpl
         OR,
     };
 
-    class ConditionNode : public IObject
+    class ConditionNode : public ICondition
     {
     public:
-        ConditionNode(const ConditionNode *, const ConditionNode *, const Condition *, OPERAND);
+        ConditionNode(const ICondition &, const ICondition &, OPERAND);
         ConditionNode(const ConditionNode& orig);
         virtual ~ConditionNode();
         ConditionNode   &operator = (const ConditionNode &);
 
         std::vector<const Variable *> GetVariables() const;
+        void                BuildCondition(llvm::BasicBlock *actionBlock, llvm::BasicBlock *trueBlock, llvm::BasicBlock *falseBlock) const;
 
         // Get a string representation of the object
         const std::string&  ToString() const;
@@ -44,31 +46,15 @@ namespace kpl
         // create a new instance by making a deep copy of the current object data
         IObject*            Clone() const;
     private:
-        ConditionNode   *_left;
-        ConditionNode   *_right;
-        Condition       *_cond;
+        ICondition      *_left;
+        ICondition      *_right;
         OPERAND         _op;
         std::string     _objectToStr;
         std::string     _objectType;
     };
-/*
-    ConditionNode   &operator || (ConditionNode &, ConditionNode &);
-    ConditionNode   &operator && (ConditionNode &, ConditionNode &);
-    ConditionNode   &operator || (Condition &, ConditionNode &);
-    ConditionNode   &operator && (Condition &, ConditionNode &);
-    ConditionNode   &operator || (ConditionNode &, Condition &);
-    ConditionNode   &operator && (ConditionNode &, Condition &);
-    ConditionNode   &operator || (Condition &, Condition &);
-    ConditionNode   &operator && (Condition &, Condition &);
- */
-    ConditionNode   operator || (const ConditionNode &, const ConditionNode &);
-    ConditionNode   operator && (const ConditionNode &, const ConditionNode &);
-    ConditionNode   operator || (const Condition &, const ConditionNode &);
-    ConditionNode   operator && (const Condition &, const ConditionNode &);
-    ConditionNode   operator || (const ConditionNode &, const Condition &);
-    ConditionNode   operator && (const ConditionNode &, const Condition &);
-    ConditionNode   operator || (const Condition &, const Condition &);
-    ConditionNode   operator && (const Condition &, const Condition &);
+
+    ConditionNode   operator || (const ICondition &, const ICondition &);
+    ConditionNode   operator && (const ICondition &, const ICondition &);
 };
 #endif	/* _CONDITIONNODE_H */
 

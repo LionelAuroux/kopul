@@ -11,7 +11,6 @@ StaticStruct::StaticStruct() : _objectToStr(new std::string())
 StaticStruct::StaticStruct(const StaticStruct& staticStruct) : Container<StaticType>(staticStruct), _objectToStr(new std::string())
 {
     _objectType = "StaticStruct";
-    SetName(staticStruct.GetName());
 }
 
 StaticStruct::~StaticStruct()
@@ -21,7 +20,6 @@ StaticStruct::~StaticStruct()
 
 StaticStruct&   StaticStruct::operator = (const StaticStruct& old)
 {
-    this->SetName(old.GetName());
     *this->_objectToStr = *old._objectToStr;
     static_cast<Container<StaticType>& >(*this) = static_cast<const Container<StaticType>& >(old);
     return (*this);
@@ -48,22 +46,21 @@ int                    StaticStruct::GetSizeInOctet() const
     return (this->GetSize() / 8);
 }
 
-const llvm::Type*   StaticStruct::GetLLVMType() const
+/*const llvm::Type*   StaticStruct::GetLLVMType() const
 {
     std::vector<const llvm::Type*> listTypeLLVM;
 
     for (unsigned int i = 0; i < this->_list.size(); ++i)
         listTypeLLVM.push_back(this->_list[i]->GetLLVMType());
     return (llvm::StructType::get(llvm::getGlobalContext(), listTypeLLVM));
-}
+}*/
 
 // Get a string representation of the object
 const std::string&  StaticStruct::ToString() const
 {
-    *this->_objectToStr = this->_objectType + "\n{\n";
+    *this->_objectToStr = this->_objectType + "_of_";
     for (unsigned int i = 0; i < this->_list.size(); ++i)
-        *this->_objectToStr += this->_list[i]->ToString() + "\n";
-    *this->_objectToStr += "}";
+        *this->_objectToStr += this->_list[i]->ToString() + "__";
     return (*this->_objectToStr);
 }
 

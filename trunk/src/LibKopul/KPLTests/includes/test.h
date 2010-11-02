@@ -7,8 +7,9 @@ bool    V(bool, const std::string&);
 bool    testBitfield();
 bool    testStaticArray();
 bool    testStaticStruct();
-bool    testValue();
+bool    testConstantValue();
 bool    testDynamicArray();
 bool    testSwitch();
+bool    testVariable();
 
 #endif //__TEST__H_

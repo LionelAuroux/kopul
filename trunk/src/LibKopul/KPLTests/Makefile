@@ -4,13 +4,14 @@ SRC		=	srcs/main.cpp			\
 			srcs/testBitfield.cpp		\
 			srcs/testStaticArray.cpp	\
 			srcs/testStaticStruct.cpp	\
-			srcs/testValue.cpp		\
+			srcs/testConstantValue.cpp	\
 			srcs/testDynamicArray.cpp	\
+			srcs/testVariable.cpp		\
 			srcs/testSwitch.cpp
 OBJ		=	$(SRC:.cpp=.o)
 RM		=	rm -f
 INCFLAGS	=	-I../KPLC++/includes -I./includes/
-LFLAGS		=	-L../KPLC++/ -lkopul `llvm-config --ldflags --libs `
+LFLAGS		=	-L../KPLC++/ -lkopul `llvm-config --ldflags --libs ` -fexceptions
 CPPFLAGS	= 	-W -Wall `llvm-config --cxxflags` $(INCFLAGS) $(LFLAGS)
 CMD		=	$(GPP) -o $(NAME) $(OBJ) $(LFLAGS)
 

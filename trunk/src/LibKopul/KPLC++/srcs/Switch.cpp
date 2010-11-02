@@ -1,3 +1,6 @@
+#include <exception>
+#include <sstream>
+
 #include "Variable.h"
 #include "Switch.h"
 
@@ -22,10 +25,32 @@ Switch::~Switch()
 
 Switch&             Switch::operator = (const Switch &old)
 {
-    this->SetName(old.GetName());
     *this->_objectToStr = *old._objectToStr;
     static_cast<Container<SwitchCondition>& >(*this) = static_cast<const Container<SwitchCondition>& >(old);
     return (*this);
+}
+
+void                    Switch::SetName(const std::string& name)
+{
+    std::ostringstream  oss;
+
+    Type::SetName(name);
+    for (unsigned int i = 0; i < this->_list.size(); ++i)
+    {
+        //this->_list[i];
+    }
+}
+
+int                     Switch::GetNbType() const
+{
+    return (this->_list.size());
+}
+
+const Type              &Switch::GetTypeN(int i) const
+{
+    if (!(i >= 0 && i < (int)this->_list.size()))
+        throw std::exception();
+    return (this->_list[i]->GetTypeAssociateWithCondition());
 }
 
 const std::string&  Switch::ToString() const
@@ -33,9 +58,9 @@ const std::string&  Switch::ToString() const
     std::string&    toStr = *this->_objectToStr;
 
     std::cout << this->_list.size() << std::endl;
-    toStr = this->GetType() + ":\n";
+    toStr = this->GetType() + "_";
     for (unsigned int i = 0; i < this->_list.size(); ++i)
-        toStr += this->_list[i]->ToString() + "\n";
+        toStr += this->_list[i]->ToString() + (i == this->_list.size() - 1 ? "__" : "__else__");
     return (toStr);
 }
 
@@ -62,6 +87,29 @@ IObject*            Switch::Clone() const
     return (new Switch(*this));
 }
 
+void*               Switch::AllocBuffer(void *oldBuffer) const
+{
+    SwitchBuffer    *sBuff = new SwitchBuffer;
+
+    sBuff->_buffer = new void*[this->_list.size()];
+    sBuff->_succesCase = 0;
+    for (unsigned int i = 0; i < this->_list.size(); ++i)
+        sBuff->_buffer[i] = this->_list[i]->GetTypeAssociateWithCondition().AllocBuffer(oldBuffer == NULL ? NULL : ((SwitchBuffer *)oldBuffer)->_buffer[i]);
+    return (sBuff);
+}
+
+void                Switch::FreeBuffer(void *oldBuffer) const
+{
+    SwitchBuffer    *sBuff = (SwitchBuffer *)oldBuffer;
+
+    if (sBuff == NULL)
+        return ;
+    for (unsigned int i = 0; i < this->_list.size(); ++i)
+        this->_list[i]->GetTypeAssociateWithCondition().FreeBuffer(sBuff->_buffer[i]);
+    delete[] sBuff->_buffer;
+    delete sBuff;
+}
+
 bool                Switch::Build(llvm::Module *module, MODE mode) const
 {
     std::map<std::string, const llvm::Type *>   mapVariable;
@@ -72,40 +120,51 @@ bool                Switch::Build(llvm::Module *module, MODE mode) const
         victor = this->_list[i]->GetVariables();
         for (unsigned int j = 0; j < victor.size(); ++j)
         {
-            mapVariable[victor[j]->GetVariableName()] = llvm::PointerType::getUnqual(llvm::IntegerType::get(llvm::getGlobalContext(), victor[j]->GetSizeInOctet() * 8));
+            mapVariable[victor[j]->GetVariableName()] = llvm::PointerType::getUnqual(llvm::IntegerType::get(llvm::getGlobalContext(), 32/*victor[j]->GetSizeInOctet() * 8*/));
         }
     }
     return (this->BuildFunctions(module, mapVariable, mode));
 }
 
-llvm::BasicBlock*   Switch::BuildEncodingToMemory(llvm::BasicBlock *actionBlock) const
+llvm::BasicBlock*   Switch::BuildEncodingToMemory(llvm::BasicBlock *actionBlock, llvm::Value *streamAdr, llvm::Value *nbBytesAdr, llvm::Value *paramAdr) const
 {
+    // TODO
     return (actionBlock);
 }
 
-llvm::BasicBlock*   Switch::BuildDecodingFromMemory(llvm::BasicBlock *actionBlock) const
+llvm::BasicBlock*   Switch::BuildDecodingFromMemory(llvm::BasicBlock *actionBlock, llvm::Value *streamAdr, llvm::Value *nbBytesAdr, llvm::Value *paramAdr) const
 {
+    // TODO
     return (actionBlock);
 }
 
-llvm::BasicBlock*   Switch::BuildEncodingToFile(llvm::BasicBlock *actionBlock) const
+llvm::BasicBlock*   Switch::BuildEncodingToFile(llvm::BasicBlock *actionBlock, llvm::Value *streamAdr, llvm::Value *nbBytesAdr, llvm::Value *paramAdr) const
 {
+    // TODO
     return (actionBlock);
 }
 
-llvm::BasicBlock*   Switch::BuildDecodingFromFile(llvm::BasicBlock *actionBlock) const
+llvm::BasicBlock*   Switch::BuildDecodingFromFile(llvm::BasicBlock *actionBlock, llvm::Value *streamAdr, llvm::Value *nbBytesAdr, llvm::Value *paramAdr) const
 {
+    // TODO
     return (actionBlock);
 }
 
-llvm::BasicBlock*   Switch::BuildEncodingToSocket(llvm::BasicBlock *actionBlock) const
+llvm::BasicBlock*   Switch::BuildEncodingToSocket(llvm::BasicBlock *actionBlock, llvm::Value *streamAdr, llvm::Value *nbBytesAdr, llvm::Value *paramAdr) const
 {
+    // TODO
     return (actionBlock);
 }
 
-llvm::BasicBlock*   Switch::BuildDecodingFromSocket(llvm::BasicBlock *actionBlock) const
+llvm::BasicBlock*   Switch::BuildDecodingFromSocket(llvm::BasicBlock *actionBlock, llvm::Value *streamAdr, llvm::Value *nbBytesAdr, llvm::Value *paramAdr) const
 {
+    // TODO
     return (actionBlock);
+}
+
+const llvm::Type*   Switch::GetLLVMType() const
+{
+    return (NULL);
 }
 
 /*
@@ -130,22 +189,12 @@ SwitchCondition&    kpl::operator , (const Type &type, Condition &cond)
 }
  */
 
-SwitchCondition    kpl::operator , (const ConditionNode &condNode, const Type &type)
+SwitchCondition    kpl::operator , (const ICondition &cond, const Type &type)
 {
-    return (SwitchCondition(condNode, type));
+    return (SwitchCondition(cond, type));
 }
 
-SwitchCondition    kpl::operator , (const Condition &cond, const Type &type)
+SwitchCondition    kpl::operator , (const Type &type, const ICondition &cond)
 {
-    return (SwitchCondition(ConditionNode(NULL, NULL, &cond, NOP), type));
-}
-
-SwitchCondition    kpl::operator , (const Type &type, const ConditionNode &condNode)
-{
-    return (SwitchCondition(condNode, type));
-}
-
-SwitchCondition    kpl::operator , (const Type &type, const Condition &cond)
-{
-    return (SwitchCondition(ConditionNode(NULL, NULL, &cond, NOP), type));
+    return (SwitchCondition(cond, type));
 }

@@ -19,7 +19,6 @@ Bitfield::Bitfield(const Bitfield& bit)
     _size = bit._size;
     _objectType = bit._objectType;
     _objectToStr = bit._objectToStr;
-    SetName(bit.GetName());
 }
 
 Bitfield::~Bitfield()
@@ -32,7 +31,6 @@ Bitfield&   Bitfield::operator = (const Bitfield& bit)
     this->_size = bit._size;
     this->_objectType = bit._objectType;
     this->_objectToStr = bit._objectToStr;
-    this->SetName(bit.GetName());
     return (*this);
 }
 
@@ -57,11 +55,6 @@ void		Bitfield::SetSize(int size)
     this->_objectToStr = this->_objectType + oss.str();
 }
 
-const llvm::Type*   Bitfield::GetLLVMType() const
-{
-    return (llvm::IntegerType::get(llvm::getGlobalContext(), this->_size));
-}
-
 // Get a string representation of the object
 const std::string&  Bitfield::ToString() const
 {
@@ -79,7 +72,7 @@ bool                Bitfield::Equals(const IObject &value) const
 {
     if (this->GetType() == value.GetType())
     {
-        if (this->_size == static_cast<const Bitfield&>(value)._size)
+        if (this->_size == reinterpret_cast<const Bitfield&>(value)._size)
             return (true);
     }
     return (false);

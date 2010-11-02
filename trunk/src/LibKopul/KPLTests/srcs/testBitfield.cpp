@@ -25,10 +25,6 @@ namespace NamespaceTestBitfield
         Bitfield bit14(14);
 
         // Construction du register
-        bit5.SetName("i5");
-        bit6.SetName("i6");
-        bit7.SetName("i7");
-        bit14.SetName("i14");
         reg << bit5 << bit6 << bit7 << bit14;
         reg.Dump();
 
