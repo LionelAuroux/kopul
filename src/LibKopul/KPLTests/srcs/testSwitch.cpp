@@ -3,6 +3,7 @@
 #include "Bitfield.h"
 #include "Switch.h"
 #include "Variable.h"
+#include "ConstantValue.h"
 
 using namespace kpl;
 
@@ -11,21 +12,21 @@ namespace NamespaceTestSwitch
 
     bool test1()
     {
-        Bitfield    bit2(2);
-        Bitfield    bit4(4);
-        Bitfield    bit5(5);
-        Bitfield    bit8(8);
-        Bitfield    bit16(16);
-        Bitfield    bit32(32);
-        Variable    var("var", bit32);
-        Value       val0(bit32, 0);
-        Value       val1(bit32, 1);
-        Value       val2(bit32, 2);
-        Value       val3(bit32, 3);
-        Value       val4(bit32, 4);
-        Value       val5(bit32, 5);
-        Switch      sw;
-        Switch      sw2;
+        Bitfield        bit2(2);
+        Bitfield        bit4(4);
+        Bitfield        bit5(5);
+        Bitfield        bit8(8);
+        Bitfield        bit16(16);
+        Bitfield        bit32(32);
+        Variable        var("var", bit32);
+        ConstantValue   val0(bit32, 0);
+        ConstantValue   val1(bit32, 1);
+        ConstantValue   val2(bit32, 2);
+        ConstantValue   val3(bit32, 3);
+        ConstantValue   val4(bit32, 4);
+        ConstantValue   val5(bit32, 5);
+        Switch          sw;
+        Switch          sw2;
 
         sw  << ((var <= val0), bit2)
             << ((var >= val0 && var <= val1), bit4)
@@ -42,23 +43,23 @@ namespace NamespaceTestSwitch
 
     bool test2()
     {
-        Register    reg;
-        Bitfield    bit2(2);
-        Bitfield    bit4(4);
-        Bitfield    bit5(5);
-        Bitfield    bit8(8);
-        Bitfield    bit16(16);
-        Bitfield    bit32(32);
-        Variable    var1("var1", bit32);
-        Variable    var2("var2", bit32);
-        Variable    var3("var3", bit32);
-        Value       val0(bit32, 0);
-        Value       val1(bit32, 1);
-        Value       val2(bit32, 2);
-        Value       val3(bit32, 3);
-        Value       val4(bit32, 4);
-        Value       val5(bit32, 5);
-        Switch      sw;
+        Register        reg;
+        Bitfield        bit2(2);
+        Bitfield        bit4(4);
+        Bitfield        bit5(5);
+        Bitfield        bit8(8);
+        Bitfield        bit16(16);
+        Bitfield        bit32(32);
+        Variable        var1("var1", bit32);
+        Variable        var2("var2", bit32);
+        Variable        var3("var3", bit32);
+        ConstantValue   val0(bit32, 0);
+        ConstantValue   val1(bit32, 1);
+        ConstantValue   val2(bit32, 2);
+        ConstantValue   val3(bit32, 3);
+        ConstantValue   val4(bit32, 4);
+        ConstantValue   val5(bit32, 5);
+        Switch          sw;
 
         sw  << ((var1 <= val0), bit2)
             << ((var1 >= val0 && var1 <= val1), bit4)

@@ -28,7 +28,6 @@ namespace kpl
             virtual IObject*            Clone() const;
 
         protected:
-            const llvm::Type*   GetLLVMType() const;
 
         private:
             int                 _size;

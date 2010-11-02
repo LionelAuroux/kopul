@@ -19,53 +19,71 @@ StaticType::~StaticType()
 
 }
 
+void*           StaticType::AllocBuffer(void *oldBuffer) const
+{
+    void        *newBuffer;
+
+    newBuffer = new char[this->GetSizeInOctet() + 1];
+    if (oldBuffer != NULL)
+        memcpy(newBuffer, oldBuffer, this->GetSizeInOctet());
+    return (newBuffer);
+}
+
+void            StaticType::FreeBuffer(void *oldBuffer) const
+{
+    if (oldBuffer == NULL)
+        return ;
+    delete[] ((char *)oldBuffer);
+}
+
 // Build le type
 bool                    StaticType::Build(llvm::Module *module, MODE mode) const
 {
     std::map<std::string, const llvm::Type *>   mapVariable;
 
-    mapVariable[this->GetName() + "paramAdr"] = llvm::PointerType::getUnqual(llvm::IntegerType::get(llvm::getGlobalContext(), this->GetSizeInOctet() * 8));
+    mapVariable[this->GetName()] = llvm::PointerType::getUnqual(this->GetLLVMType());
     return (this->BuildFunctions(module, mapVariable, mode));
 }
 
-llvm::BasicBlock*	StaticType::BuildEncodingToMemory(llvm::BasicBlock *actionBlock) const
+llvm::BasicBlock*	StaticType::BuildEncodingToMemory(llvm::BasicBlock *actionBlock, llvm::Value *streamAdr, llvm::Value *nbBytesAdr, llvm::Value *paramAdr) const
 {
-    llvm::Value *streamAdr = actionBlock->getValueSymbolTable()->lookup("i8StreamAdr");
-    llvm::Value *nbBytesAdr = actionBlock->getParent()->getParent()->getValueSymbolTable().lookup("_nbBytesWrite");
-    llvm::BasicBlock    *addSizeToStreamBlock = this->CreateStoreParamToStream(streamAdr, nbBytesAdr, actionBlock->getValueSymbolTable()->lookup(this->GetName() + "paramAdr"), this->GetSize(), actionBlock, std::string("addSizeTo"));
+    llvm::BasicBlock    *addSizeToStreamBlock = this->CreateStoreParamToStream(streamAdr, nbBytesAdr, paramAdr, this->GetSize(), actionBlock, std::string("addSizeTo"));
 
     return (this->CreateAddSizeToStream(streamAdr, nbBytesAdr, this->GetSize(), addSizeToStreamBlock));
 }
 
-llvm::BasicBlock*	StaticType::BuildDecodingFromMemory(llvm::BasicBlock *actionBlock) const
+llvm::BasicBlock*	StaticType::BuildDecodingFromMemory(llvm::BasicBlock *actionBlock, llvm::Value *streamAdr, llvm::Value *nbBytesAdr, llvm::Value *paramAdr) const
 {
-    llvm::Value *streamAdr = actionBlock->getValueSymbolTable()->lookup("i8StreamAdr");
-    llvm::Value *nbBytesAdr = actionBlock->getParent()->getParent()->getValueSymbolTable().lookup("_nbBytesRead");
-    llvm::BasicBlock    *addSizeToStreamBlock = this->CreateLoadParamFromStream(streamAdr, nbBytesAdr, actionBlock->getValueSymbolTable()->lookup(this->GetName() + "paramAdr"), this->GetSize(), actionBlock, std::string("addSizeTo"));
+    llvm::BasicBlock    *addSizeToStreamBlock = this->CreateLoadParamFromStream(streamAdr, nbBytesAdr, paramAdr, this->GetSize(), actionBlock, std::string("addSizeTo"));
 
     return (this->CreateAddSizeToStream(streamAdr, nbBytesAdr, this->GetSize(), addSizeToStreamBlock));
 }
 
-llvm::BasicBlock*	StaticType::BuildEncodingToFile(llvm::BasicBlock *actionBlock) const
+llvm::BasicBlock*	StaticType::BuildEncodingToFile(llvm::BasicBlock *actionBlock, llvm::Value *streamAdr, llvm::Value *nbBytesAdr, llvm::Value *paramAdr) const
 {
-
+    // TODO
     return (actionBlock);
 }
 
-llvm::BasicBlock*	StaticType::BuildDecodingFromFile(llvm::BasicBlock *actionBlock) const
+llvm::BasicBlock*	StaticType::BuildDecodingFromFile(llvm::BasicBlock *actionBlock, llvm::Value *streamAdr, llvm::Value *nbBytesAdr, llvm::Value *paramAdr) const
 {
-
+    // TODO
     return (actionBlock);
 }
 
-llvm::BasicBlock*	StaticType::BuildEncodingToSocket(llvm::BasicBlock *actionBlock) const
+llvm::BasicBlock*	StaticType::BuildEncodingToSocket(llvm::BasicBlock *actionBlock, llvm::Value *streamAdr, llvm::Value *nbBytesAdr, llvm::Value *paramAdr) const
 {
-
+    // TODO
     return (actionBlock);
 }
 
-llvm::BasicBlock*	StaticType::BuildDecodingFromSocket(llvm::BasicBlock *actionBlock) const
+llvm::BasicBlock*	StaticType::BuildDecodingFromSocket(llvm::BasicBlock *actionBlock, llvm::Value *streamAdr, llvm::Value *nbBytesAdr, llvm::Value *paramAdr) const
 {
-    
+    // TODO
     return (actionBlock);
+}
+
+const llvm::Type*       StaticType::GetLLVMType() const
+{
+    return (llvm::IntegerType::get(llvm::getGlobalContext(), this->GetSizeInOctet() * 8));
 }

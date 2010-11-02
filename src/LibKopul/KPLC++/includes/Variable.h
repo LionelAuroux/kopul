@@ -1,62 +1,54 @@
 #ifndef __VARIABLE___H
-# define __VARIABLE___H
-# include <vector>
-# include <string>
+#define __VARIABLE___H
+#include <vector>
+#include <string>
 
-# include "Value.h"
+#include "StaticType.h"
+#include "Value.h"
 
-namespace kpl
-{
-	class	Variable : public Value
-	{
-        public:
-            Variable(const std::string &name, const StaticType *);
-            Variable(const std::string &name, const StaticType &);
-            Variable(const std::string &name, const Type *, int sizeInBytes = 8192);
-            Variable(const std::string &name, const Type &, int sizeInBytes = 8192);
-            Variable(const Variable&);
-            ~Variable();
+namespace kpl {
 
-            char*               operator * ();
-            char*               GetValue();
+    class VariableIterator;
+    
+    class Variable : public Value {
+    public:
+        Variable(const std::string &name, const Type &, bool isLastBytesRead = false);
+        Variable(const Variable&);
+        ~Variable();
 
-            template <typename T>
-            T                   Get() const
-            {
-                return (*((T *)this->_value));
-            }
+        Variable &                  operator =(const Variable &);
+        virtual void*               operator *();
+        virtual VariableIterator    operator [](unsigned int i);
 
-            template <typename T>
-            void                Set(T value)
-            {
-                *((T *)this->_value) = value;
-            }
+        bool                        IsLastBytesRead() const;
 
-            void                Set(const void *value, int sizeInBytes);
+        void                        SetVariableName(const std::string &variableName);
+        const std::string           &GetVariableName() const;
 
-            void                SetVariableName(const std::string &variableName);
-            const std::string   &GetVariableName() const;
+        virtual llvm::Value         *GetLLVMValue(llvm::BasicBlock *) const;
+        void                        SetLLVMValuePointerToLastBytesRead(llvm::Value *);
 
-            llvm::Value         *GetLLVMValue(llvm::BasicBlock *) const;
+        virtual Value               *Duplicate() const;
+        const std::string           &ToStr() const;
 
-            // Get a string representation of the object
-            const std::string&  ToString() const;
+        template <typename T>
+        T                           Get() const
+        {
+            return (*(T *)this->_value);
+        }
 
-            // Get the type of the object
-            const std::string&  GetType() const;
+        template <typename T>
+        void                        Set(T val)
+        {
+            *(T *)this->_value = val;
+        }
 
-            // returns true if the given type and content are equal.
-            bool                Equals(const IObject &value) const;
-
-            // create a new instance by making a deep copy of the current object data
-            IObject*            Clone() const;
-        protected:
-
-        private:
-            std::string             _variableName;
-            std::string             _objectToStr;
-            std::string             _objectType;
-	};
+    protected:
+        llvm::Value         *_lastBytes;
+        bool                _isLastBytesRead;
+        std::string         _variableName;
+    private:
+    };
 };
 
 #endif //__VARIABLE___H

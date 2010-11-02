@@ -24,9 +24,11 @@ namespace kpl
         Container&          operator = (const Container&);
         void                Add(const T&);
         void                Add(const T*);
-        Container&   operator << (const T&);
-        Container&   operator << (const T*);
+        Container&          operator << (const T&);
+        Container&          operator << (const T*);
         void                Clear();
+        unsigned int        Size();
+        T*                  operator[](unsigned int i);
     protected:
         std::vector<T*>      _list;
 

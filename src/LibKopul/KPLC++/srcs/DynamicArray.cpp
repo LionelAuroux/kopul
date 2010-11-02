@@ -1,47 +1,81 @@
+#include <exception>
+
 #include "DynamicArray.h"
 
 using namespace kpl;
 
-DynamicArray::DynamicArray(const Value& endValue)
+DynamicArray::DynamicArray(const SwitchCondition& sCond, int nbMax)
 {
-    _endValue = static_cast<Value *>(endValue.Clone());
+    _sCond = static_cast<SwitchCondition *>(sCond.Clone());
     _objectType = "DynamicArray";
-    _objectToStr = _objectType + "_where_end_value_is_" + endValue.ToString();
+    _objectToStr = _objectType + "_" + sCond.ToString();
+    _nbMax = nbMax;
 }
 
 DynamicArray::DynamicArray(const DynamicArray& old)
 {
-    _endValue = static_cast<Value *>(old._endValue->Clone());
-    this->SetName(old.GetName());
+    _sCond = static_cast<SwitchCondition *>(old._sCond->Clone());
     _objectType = old._objectType;
     _objectToStr = old._objectToStr;
+    _nbMax = old._nbMax;
 }
 
 DynamicArray::~DynamicArray()
 {
-    delete (this->_endValue);
+    delete (this->_sCond);
 }
 
 DynamicArray&       DynamicArray::operator = (const DynamicArray& old)
 {
-    delete (this->_endValue);
-    this->_endValue = static_cast<Value *>(old._endValue->Clone());
-    this->SetName(old.GetName());
+    delete (this->_sCond);
+    this->_sCond = static_cast<SwitchCondition *>(old._sCond->Clone());
     _objectType = old._objectType;
     _objectToStr = old._objectToStr;
+    _nbMax = old._nbMax;
     return (*this);
 }
 
-const Value&        DynamicArray::GetEndValue() const
+int                 DynamicArray::GetNbType() const
 {
-    return (*this->_endValue);
+    return (this->_nbMax);
 }
 
-void                DynamicArray::SetEndValue(const Value& newEndValue)
+const Type          &DynamicArray::GetTypeN(int i) const
 {
-    delete (this->_endValue);
-    this->_endValue = static_cast<Value *>(newEndValue.Clone());
-    _objectToStr = _objectType + "_where_end_value_is_" + newEndValue.ToString();
+    if (!(i >= 0 && i < this->_nbMax))
+        throw (std::exception());
+    return (this->_sCond->GetTypeAssociateWithCondition());
+}
+
+void                DynamicArray::SetName(const std::string& name)
+{
+    Type::SetName(name);
+//    this->_sCond->GetTypeAssociateWithCondition().SetName(this->_sCond->GetTypeAssociateWithCondition().ToString() + "_in_" + name);
+}
+
+void*               DynamicArray::AllocBuffer(void *oldBuffer) const
+{
+    void            **newBuffer = new void*[this->_nbMax + 1];
+
+    for (int i = 0; i < this->_nbMax; ++i)
+        newBuffer[i] = this->_sCond->GetTypeAssociateWithCondition().AllocBuffer(oldBuffer == NULL ? NULL : ((void **)oldBuffer)[i]);
+    return (newBuffer);
+}
+
+void                DynamicArray::FreeBuffer(void *oldBuffer) const
+{
+    void            **buffer = (void **)oldBuffer;
+
+    if (buffer == NULL)
+        return ;
+    for (int i = 0; i < this->_nbMax; ++i)
+        this->_sCond->GetTypeAssociateWithCondition().FreeBuffer(buffer[i]);
+    delete[] buffer;
+}
+
+const SwitchCondition&        DynamicArray::GetSwitchCondition() const
+{
+    return (*this->_sCond);
 }
 
 // Get a string representation of the object
@@ -59,7 +93,7 @@ const std::string&  DynamicArray::GetType() const
 // returns true if the given type and content are equal.
 bool                DynamicArray::Equals(const IObject &val) const
 {
-    if (this->GetType() == val.GetType() && this->_endValue->Equals(*static_cast<const DynamicArray&>(val)._endValue))
+    if (this->GetType() == val.GetType() && this->_sCond->Equals(*static_cast<const DynamicArray&>(val)._sCond))
         return (true);
     return (false);
 }
@@ -70,82 +104,104 @@ IObject*            DynamicArray::Clone() const
     return (new DynamicArray(*this));
 }
 
+const llvm::Type*   DynamicArray::GetLLVMType() const
+{
+    return (llvm::PointerType::getUnqual(llvm::PointerType::getUnqual(this->_sCond->GetTypeAssociateWithCondition().GetLLVMType())));
+}
+
 bool                DynamicArray::Build(llvm::Module *module, MODE mode) const
 {
     std::map<std::string, const llvm::Type *>   mapVariable;
 
-    mapVariable[this->_endValue->GetTypeOfValue().GetName() + "paramAdr"] = llvm::PointerType::getUnqual(llvm::IntegerType::get(llvm::getGlobalContext(), this->_endValue->GetSizeInOctet() * 8));
+    mapVariable[this->GetName()] = this->GetLLVMType();
     return (this->BuildFunctions(module, mapVariable, mode));
 }
 
-llvm::BasicBlock*   DynamicArray::BuildEncodingToMemory(llvm::BasicBlock *actionBlock) const
+llvm::BasicBlock*   DynamicArray::MemoryBuilding(llvm::BasicBlock *actionBlock, llvm::Value *streamAdr, llvm::Value *nbBytesAdr, llvm::Value *paramAdr, MEMORY_TYPE flag) const
 {
-    llvm::IRBuilder<>   builder(llvm::getGlobalContext());
-    llvm::Value         *i8StreamAdr = actionBlock->getValueSymbolTable()->lookup("i8StreamAdr");
-    llvm::Value         *nbBytesWriteAdr = actionBlock->getParent()->getParent()->getValueSymbolTable().lookup("_nbBytesWrite");
+    const std::vector<const Variable *>   &listVariable = this->_sCond->GetVariables();
+    llvm::IRBuilder<>               builder(llvm::getGlobalContext());
+    llvm::BasicBlock                *loop;
+    llvm::BasicBlock                *newBlock;
+    llvm::BasicBlock                *typeBuildingBlock;
+    llvm::Value                     *lastBytes;
+    llvm::Value                     *index;
+    llvm::Value                     *i;
+    llvm::Value                     *tmpAdr;
+    llvm::Value                     *tmp;
+    llvm::Value                     *resAdd;
 
     builder.SetInsertPoint(actionBlock);
-    llvm::Value         *streamParam = builder.CreateAlloca(llvm::PointerType::getUnqual(llvm::IntegerType::get(llvm::getGlobalContext(), this->_endValue->GetSizeInOctet() * 8)), llvm::ConstantInt::get(llvm::getGlobalContext(), llvm::APInt(32, 1, false)), "value");
-    builder.CreateStore(actionBlock->getValueSymbolTable()->lookup(this->_endValue->GetTypeOfValue().GetName() + "paramAdr"), streamParam);
-    llvm::Value         *paramAdr = builder.CreateAlloca(llvm::IntegerType::get(llvm::getGlobalContext(), this->_endValue->GetSizeInOctet() * 8), llvm::ConstantInt::get(llvm::getGlobalContext(), llvm::APInt(32, 1, false)), "value");
-    llvm::Value         *nbBytes = builder.CreateAlloca(llvm::IntegerType::get(llvm::getGlobalContext(), 8), llvm::ConstantInt::get(llvm::getGlobalContext(), llvm::APInt(32, 1, false)), "value");
-    builder.CreateStore(llvm::ConstantInt::get(llvm::getGlobalContext(), llvm::APInt(8, 0, false)), nbBytes);
-    llvm::BasicBlock    *loop = llvm::BasicBlock::Create(llvm::getGlobalContext(), "loop", actionBlock->getParent());
+    // Create a variable for the LastBytes read
+    lastBytes = builder.CreateAlloca(this->_sCond->GetTypeAssociateWithCondition().GetLLVMType(), llvm::ConstantInt::get(llvm::getGlobalContext(), llvm::APInt(32, 1, false)), "LastBytes");
+    for (unsigned int i = 0; i < listVariable.size(); ++i)
+        if (listVariable[i]->IsLastBytesRead())
+            const_cast<Variable *>(listVariable[i])->SetLLVMValuePointerToLastBytesRead(lastBytes);
+    // Create a variable for the index of the array
+    index = builder.CreateAlloca(llvm::IntegerType::get(llvm::getGlobalContext(), 32), llvm::ConstantInt::get(llvm::getGlobalContext(), llvm::APInt(32, 1, false)), "index");
+    // Store 0 to the index
+    builder.CreateStore(llvm::ConstantInt::get(llvm::getGlobalContext(), llvm::APInt(32, 0, false)), index);
+    // Create the loop block
+    loop = llvm::BasicBlock::Create(llvm::getGlobalContext(), "loop", actionBlock->getParent());
+    // Create the new action block
+    newBlock = llvm::BasicBlock::Create(llvm::getGlobalContext(), "newBlock", actionBlock->getParent());
+    // Go to loop
     builder.CreateBr(loop);
+    // Set insert point in the loop block
+    builder.SetInsertPoint(loop);
 
-    llvm::BasicBlock    *addSizeToParamStreamBlock = this->CreateLoadParamFromStream(streamParam, nbBytes, paramAdr, this->_endValue->GetSize(), loop, std::string("addSizeTo"));
-    llvm::BasicBlock    *storeParamBlock = this->CreateAddSizeToStream(streamParam, nbBytes, this->_endValue->GetSize(), addSizeToParamStreamBlock);
-    llvm::BasicBlock    *addSizeToI8StreamBlock = this->CreateStoreParamToStream(i8StreamAdr, nbBytesWriteAdr, paramAdr, this->_endValue->GetSize(), storeParamBlock, std::string("addSizeTo"));
-    llvm::BasicBlock    *cmpBlock = this->CreateAddSizeToStream(i8StreamAdr, nbBytesWriteAdr, this->_endValue->GetSize(), addSizeToI8StreamBlock);
-    llvm::BasicBlock    *newActionBlock = llvm::BasicBlock::Create(llvm::getGlobalContext(), "action", actionBlock->getParent());
-    builder.SetInsertPoint(cmpBlock);
-    llvm::Value         *param = builder.CreateLoad(paramAdr, "param");
-    this->_endValue->CreateCmp(param, newActionBlock, loop, cmpBlock);
-    return (newActionBlock);
+    i = builder.CreateLoad(index, "i");
+    // extract an element of the array
+    tmpAdr = builder.CreateInBoundsGEP(paramAdr, i);
+    tmpAdr = builder.CreateLoad(tmpAdr);
+    // Add 1 to the index
+    resAdd = builder.CreateAdd(i, llvm::ConstantInt::get(llvm::getGlobalContext(), llvm::APInt(32, 1, false)), "resAdd");
+    // store the result of the add to the index
+    builder.CreateStore(resAdd, index);
+    if (flag == ENCODE)
+        typeBuildingBlock = this->_sCond->GetTypeAssociateWithCondition().BuildEncodingToMemory(loop, streamAdr, nbBytesAdr, tmpAdr);
+    else
+        typeBuildingBlock = this->_sCond->GetTypeAssociateWithCondition().BuildDecodingFromMemory(loop, streamAdr, nbBytesAdr, tmpAdr);
+    // load the element
+    builder.SetInsertPoint(typeBuildingBlock);
+    tmp = builder.CreateLoad(tmpAdr, "tmp");
+    // store in the lastBytes read
+    builder.CreateStore(tmp, lastBytes);
+    // build condition in loop if true return to loop else go to newblock
+    this->_sCond->BuildCondition(typeBuildingBlock, loop, newBlock);
+    return (newBlock);
 }
 
-llvm::BasicBlock*   DynamicArray::BuildDecodingFromMemory(llvm::BasicBlock *actionBlock) const
+llvm::BasicBlock*   DynamicArray::BuildEncodingToMemory(llvm::BasicBlock *actionBlock, llvm::Value *streamAdr, llvm::Value *nbBytesAdr, llvm::Value *paramAdr) const
 {
-    llvm::IRBuilder<>   builder(llvm::getGlobalContext());
-    llvm::Value         *i8StreamAdr = actionBlock->getValueSymbolTable()->lookup("i8StreamAdr");
-    llvm::Value         *nbBytesReadAdr = actionBlock->getParent()->getParent()->getValueSymbolTable().lookup("_nbBytesRead");
-
-    builder.SetInsertPoint(actionBlock);
-    llvm::Value         *streamParam = builder.CreateAlloca(llvm::PointerType::getUnqual(llvm::IntegerType::get(llvm::getGlobalContext(), this->_endValue->GetSizeInOctet() * 8)), llvm::ConstantInt::get(llvm::getGlobalContext(), llvm::APInt(32, 1, false)), "value");
-    builder.CreateStore(actionBlock->getValueSymbolTable()->lookup(this->_endValue->GetTypeOfValue().GetName() + "paramAdr"), streamParam);
-    llvm::Value         *paramAdr = builder.CreateAlloca(llvm::IntegerType::get(llvm::getGlobalContext(), this->_endValue->GetSizeInOctet() * 8), llvm::ConstantInt::get(llvm::getGlobalContext(), llvm::APInt(32, 1, false)), "value");
-    llvm::Value         *nbBytes = builder.CreateAlloca(llvm::IntegerType::get(llvm::getGlobalContext(), 8), llvm::ConstantInt::get(llvm::getGlobalContext(), llvm::APInt(32, 1, false)), "value");
-    builder.CreateStore(llvm::ConstantInt::get(llvm::getGlobalContext(), llvm::APInt(8, 0, false)), nbBytes);
-    llvm::BasicBlock    *loop = llvm::BasicBlock::Create(llvm::getGlobalContext(), "loop", actionBlock->getParent());
-    builder.CreateBr(loop);
-
-    llvm::BasicBlock    *addSizeToI8StreamBlock = this->CreateLoadParamFromStream(i8StreamAdr, nbBytesReadAdr, paramAdr, this->_endValue->GetSize(), loop, std::string("addSizeTo"));
-    llvm::BasicBlock    *storeParamBlock = this->CreateAddSizeToStream(i8StreamAdr, nbBytesReadAdr, this->_endValue->GetSize(), addSizeToI8StreamBlock);
-    llvm::BasicBlock    *addSizeToParamStreamBlock = this->CreateStoreParamToStream(streamParam, nbBytes, paramAdr, this->_endValue->GetSize(), storeParamBlock, std::string("addSizeTo"));
-    llvm::BasicBlock    *cmpBlock = this->CreateAddSizeToStream(streamParam, nbBytes, this->_endValue->GetSize(), addSizeToParamStreamBlock);
-    llvm::BasicBlock    *newActionBlock = llvm::BasicBlock::Create(llvm::getGlobalContext(), "action", actionBlock->getParent());
-    builder.SetInsertPoint(cmpBlock);
-    llvm::Value         *param = builder.CreateLoad(paramAdr, "param");
-    this->_endValue->CreateCmp(param, newActionBlock, loop, cmpBlock);
-    return (newActionBlock);
+    return (this->MemoryBuilding(actionBlock, streamAdr, nbBytesAdr, paramAdr, ENCODE));
 }
 
-llvm::BasicBlock*   DynamicArray::BuildEncodingToFile(llvm::BasicBlock *actionBlock) const
+llvm::BasicBlock*   DynamicArray::BuildDecodingFromMemory(llvm::BasicBlock *actionBlock, llvm::Value *streamAdr, llvm::Value *nbBytesAdr, llvm::Value *paramAdr) const
 {
+    return (this->MemoryBuilding(actionBlock, streamAdr, nbBytesAdr, paramAdr, DECODE));
+}
+
+llvm::BasicBlock*   DynamicArray::BuildEncodingToFile(llvm::BasicBlock *actionBlock, llvm::Value *streamAdr, llvm::Value *nbBytesAdr, llvm::Value *paramAdr) const
+{
+    // TODO
     return (actionBlock);
 }
 
-llvm::BasicBlock*   DynamicArray::BuildDecodingFromFile(llvm::BasicBlock *actionBlock) const
+llvm::BasicBlock*   DynamicArray::BuildDecodingFromFile(llvm::BasicBlock *actionBlock, llvm::Value *streamAdr, llvm::Value *nbBytesAdr, llvm::Value *paramAdr) const
 {
+    // TODO
     return (actionBlock);
 }
 
-llvm::BasicBlock*   DynamicArray::BuildEncodingToSocket(llvm::BasicBlock *actionBlock) const
+llvm::BasicBlock*   DynamicArray::BuildEncodingToSocket(llvm::BasicBlock *actionBlock, llvm::Value *streamAdr, llvm::Value *nbBytesAdr, llvm::Value *paramAdr) const
 {
+    // TODO
     return (actionBlock);
 }
 
-llvm::BasicBlock*   DynamicArray::BuildDecodingFromSocket(llvm::BasicBlock *actionBlock) const
+llvm::BasicBlock*   DynamicArray::BuildDecodingFromSocket(llvm::BasicBlock *actionBlock, llvm::Value *streamAdr, llvm::Value *nbBytesAdr, llvm::Value *paramAdr) const
 {
+    // TODO
     return (actionBlock);
 }

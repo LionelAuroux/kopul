@@ -5,6 +5,8 @@
  * Created on August 24, 2010, 3:28 PM
  */
 
+#include <exception>
+
 #include "Type.h"
 #include "Container.h"
 #include "StaticType.h"
@@ -32,7 +34,7 @@ Container<T>::~Container()
 }
 
 template <typename T>
-Container<T>&          Container<T>::operator = (const Container<T>& old)
+Container<T>&       Container<T>::operator = (const Container<T>& old)
 {
     for (unsigned int i = 0; i < old._list.size(); ++i)
         this->Add(old._list[i]);
@@ -43,7 +45,7 @@ Container<T>&          Container<T>::operator = (const Container<T>& old)
 template <typename T>
 void                Container<T>::Add(const T& toAdd)
 {
-    this->_list.push_back(static_cast<T *>(static_cast<const IObject&>(toAdd).Clone()));
+    this->_list.push_back(reinterpret_cast<T *>(reinterpret_cast<const IObject&>(toAdd).Clone()));
 }
 
 template <typename T>
@@ -72,6 +74,20 @@ Container<T>&   Container<T>::operator << (const T* toAdd)
 {
     this->Add(*toAdd);
     return (*this);
+}
+
+template <typename T>
+unsigned int        Container<T>::Size()
+{
+    return (this->_list.size());
+}
+
+template <typename T>
+T*                  Container<T>::operator[](unsigned int i)
+{
+    if (i > this->_list.size())
+        throw std::exception();
+    return (this->_list[i]);
 }
 
 template class Container<Type>;

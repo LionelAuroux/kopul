@@ -10,7 +10,7 @@
 # include <vector>
 # include <string>
 
-# include "Item.h"
+# include "ICondition.h"
 # include "Value.h"
 # include "IObject.h"
 # include "Variable.h"
@@ -20,7 +20,7 @@ typedef llvm::Value* (llvm::IRBuilder<>::*cmpMptr)(llvm::Value *, llvm::Value *,
 namespace kpl
 {
 
-    class Condition : public IObject
+    class Condition : public ICondition
     {
     public:
         Condition(cmpMptr, const Value &, const Value &, const std::string & = "");
@@ -41,7 +41,7 @@ namespace kpl
         // create a new instance by making a deep copy of the current object data
         IObject*                Clone() const;
     protected:
-        void                    BuildCode(llvm::BasicBlock *, llvm::BasicBlock *, llvm::BasicBlock *) const;
+        void                    BuildCondition(llvm::BasicBlock *actionBlock, llvm::BasicBlock *trueBlock, llvm::BasicBlock *falseBlock) const;
 
     private:
         cmpMptr     _fptr;
@@ -50,14 +50,6 @@ namespace kpl
         std::string _objectToStr;
         std::string _objectType;
     };
-/*
-    Condition   &operator == (const Value &, const Value &);
-    Condition   &operator != (const Value &, const Value &);
-    Condition   &operator <= (const Value &, const Value &);
-    Condition   &operator >= (const Value &, const Value &);
-    Condition   &operator < (const Value &, const Value &);
-    Condition   &operator > (const Value &, const Value &);
- */
 
     Condition   operator == (const Value &, const Value &);
     Condition   operator != (const Value &, const Value &);

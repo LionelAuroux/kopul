@@ -27,7 +27,6 @@ namespace kpl
             virtual IObject*            Clone() const;
 
         protected:
-            const llvm::Type*   GetLLVMType() const;
 
         private:
             StaticType*         _staticType;

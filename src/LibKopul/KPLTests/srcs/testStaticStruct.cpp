@@ -13,7 +13,7 @@ namespace NamespaceTestStaticStruct
         int test1 : 5;
         int test2 : 6;
         int test3 : 7;
-        int test4 : 12;
+        int test4 : 14;
     } t_test;
 
     bool test1()
@@ -23,16 +23,11 @@ namespace NamespaceTestStaticStruct
         Bitfield        bit5(5);
         Bitfield        bit6(6);
         Bitfield        bit7(7);
-        Bitfield        bit12(12);
+        Bitfield        bit14(14);
         StaticStruct    myStruct;
 
         // Construction du register
-        bit5.SetName("i5");
-        bit6.SetName("i6");
-        bit7.SetName("i7");
-        bit12.SetName("i14");
-        myStruct.SetName("myStruct");
-        myStruct << bit5 << bit6 << bit7 << bit12;
+        myStruct << bit5 << bit6 << bit7 << bit14;
         reg << myStruct;
         reg.Dump();
 
@@ -70,12 +65,12 @@ namespace NamespaceTestStaticStruct
         long long int test1 : 5;
         long long int test2 : 6;
         long long int test3 : 7;
-        long long int test4 : 12;
+        long long int test4 : 14;
 
         long long int test5 : 5;
         long long int test6 : 6;
         long long int test7 : 7;
-        long long int test8 : 12;
+        long long int test8 : 14;
     } t_test2;
 
     bool test2()
@@ -85,16 +80,12 @@ namespace NamespaceTestStaticStruct
         Bitfield        bit5(5);
         Bitfield        bit6(6);
         Bitfield        bit7(7);
-        Bitfield        bit12(12);
+        Bitfield        bit14(14);
         StaticStruct    myStruct;
 
         // Construction du register
-        bit5.SetName("i5");
-        bit6.SetName("i6");
-        bit7.SetName("i7");
-        bit12.SetName("i14");
-        myStruct.SetName("myStruct");
-        myStruct << bit5 << bit6 << bit7 << bit12;
+
+        myStruct << bit5 << bit6 << bit7 << bit14;
         reg << myStruct;
         reg.Dump();
 
