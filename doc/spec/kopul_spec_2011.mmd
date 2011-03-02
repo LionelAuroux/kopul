@@ -1,0 +1,316 @@
+Title:		KOPUL - Kind Of Pack/Unpack Language - Specification
+Author:		Lionel Auroux
+
+## What is KOPUL?
+### Parse binary structure
+
+Kopul is a Domain Specific Language, aim to describe binary structures or 
+binary streams.
+As regular expressions, we want something with an expressive short syntax
+that could be used at runtime. Anyway, is also usefull to have 
+encoding/decoding library for our binary stream. So, as Flex/Bison, we try
+to give also something that could create a static parser/generator for our
+format. So the language could be used verbosely.
+Thus, kopul is a set of tool for these. Mainly a C++ library that could be 
+used at runtime, a compiler that create a static encoder/decoder library 
+and a C API to use generated library into third party software.
+
+For this goal, we used intensively LLVM for his AOT/JIT capabilities.
+
+### From bit to syntax
+
+At the opposite of other binary generator (ASN1, protocol buffer, IDL), we
+try to describe the data already here in a file/memory/whateever not to
+ease developpement of binary protocol from an abstract representation with 
+a standard encoding rules.
+
+So kopul:
+
+*	describe the binary sequences
+*	we always have a short but cryptic way to describe things
+*	we have a friendly but long way as equivalence
+*	allow to use variable for conditionnal (un)packing
+*	allow to describe constraint on value to check constistancy
+*	allow to annotate the language for tier tools analysis or documentation
+*	allow to walk metadatas of a format
+
+## Syntax
+
+### base
+
+We begin with comments
+
+	comment ::= "//" -> '\n'
+		| "/*" -> "*/"
+	;
+
+WYSIWIG? basically, all things we write is literals that we want to read/write.
+
+	translation_unit ::=
+		[data]+
+	;
+
+	data ::=
+		number // just a ['0'..'9']+
+		| hexa
+		| binary
+		| float // ?? todo
+		| string // as in C
+		| char // as in C
+	;
+
+Character and string value are read/wrotten byte by byte in the stream.
+Numeric value are stored in the best fit bytes representations. 
+
+So for the following description we want a byte with value 0x7f, followed by
+three byte respectively equals to character 'E', 'L', and 'F', and so on.
+
+	0x7f "ELF" 1 0 0 0 0 0 0 0
+
+For describing the last part, how to precise that we want a quad bytes in
+little endian?
+
+### BITFIELDS
+
+The aim is to describe sequences of binary information. So the good way is
+to write directly how many bit we want as a sequence of bitfields.
+To read/write a quad bytes, is similar to read 64 bit.
+
+	0x7f "ELF" #64
+
+We also need to add the value and the endianess. A mnemonic '/' for little endian and the value could be glued together to get a cryptic but fun 
+representation of our quad byte.
+
+	0x7f "ELF" 1:#/64
+
+So space are semanticaly or basic bitfield separator.
+
+	// so we modify translation_unit
+	translation_unit ::=
+		[field]+
+	;
+
+	flags ::= ['/' | '\']? [ '.' | '+']?
+	;
+
+	// no space between
+	bitfield ::=
+		'#" flags number
+	;
+
+	field ::=
+		bitfield
+		|
+		data [':' bitfield]?
+	;
+
+We could describe arbitrary bitfield sequences.
+
+	#128 #3 #12
+
+It's fine to define arbitrary size bifields but for signed reason we have
+problem when we store it into processor memory. How to extend it to fit byte
+aligned memory buffers? So we need sign information to say that our field 
+represent a sign/unsigned number. So we could use a flags '+' to say that
+the number is always signed.
+Same problem for floatting numbers. By default, we fit it into IEEE nearest 
+representation but we need to indicate it, because it could be important
+information for C API. So we could use a flags '.' to say that the number is
+a floatting number.
+
+	#8	/* same as char */
+	#+8	/* same as unsigned char */
+	#\16	/* network short */
+	#/+32	/* an unsigned int on IA32 */
+	#.32	/* IEEE 32 */
+	#.64	/* IEEE 64 */
+	#.80	/* extended */
+
+How to manage #.42 ?
+
+### TYPES
+
+Using only bitfield become quickly thought. A good way could be to named
+a bitfield representation in a common way and reuse it as identifier. 
+It could be easiest to write list of identifiers to describe data to 
+read/write. Using identifier as type could be used with values.
+So we modify our syntax:
+
+	type ::= identifier
+	;
+
+	typable_fields ::= bitfield | type
+	;
+
+	type_field ::= identifier '=' typable_fields
+	;
+
+	// so we modify field
+	field ::=
+		typable_fields
+		|
+		data [':' all_field]? 
+	;
+
+Now we could recreate all basic C type.
+
+	int8 = #8
+	uint8= #+8
+	int=#32
+	int64= #/64
+	llong=int64
+
+	// here we read "toto" as a 32 bit followed by a 64 bit signed
+	"toto":int int64
+
+### VARIABLES
+
+Binary stream are never flat as we want, we need to describe dynamic 
+sequence in the stream. So we need to capture thing into variable to 
+match certain pattern. we just add that a value could be an identifier.
+
+	field ::=
+		typable_fields
+		|
+		data [':' typable_fields]?
+		|
+		identifier ':' typable_fields
+	;
+
+Things begin to be funniest.
+
+### ARRAYS
+
+Only scalar is boring. We could describe aggregate of fields to describe
+more complex things. First aggreate of homogeneous fields.
+
+	condition ::= number
+	;
+
+	array_field ::= '[' field '(' condition ')' ']'
+	;
+
+	typable_fields ::= bitfield | type | array_field
+	;
+
+Now we could describe fix sized buffer, or map data into it
+
+	dos_filename = [#8(8)] // :P
+	dos_extension = [char(3)]
+
+	"this string is too long":[char(11)]
+	// read/write "this string", the compiler could raise an error
+
+### STRUCTURES
+
+Now aggregate of heterogeneous fields.
+
+	struct_field ::= '{' [field]+ '}'
+	;
+
+	typable_fields ::= bitfield | type | array_field | struct_field
+	;
+
+now data could be more complex.
+
+	coordinate = {
+		X : #.32 
+		Y : #.64
+		Z : #.80
+	}
+	word = [char (20)]
+	data : {padding : #128 word {int uchar} float}
+
+	user = {
+		name : word
+		surname : word
+		adr : {num:[char(2)] street:[char(30)]}
+	}
+
+Structure and Array use recursively variable. The scope of this variable is
+local during the read/write of the structure.
+To use variable outside of the structure the parent variable must be living,
+and we could use indirect notation to walk thru array and struct.
+So we could use variable inside and array to get dynamically the number of
+element to read.
+	
+	postfix ::= '.' identifier | '[' number ']'
+	;
+
+	variable ::= identifier [postfix]*
+	;
+
+	condition ::= number | variable
+	;
+
+Now we could use a previously read/written fields as counter.
+
+	pascalString = {len:char [char (len)]}
+
+Here all is good, len is defined outside the iteration. But we could try:
+
+	buggedCString = [c:char (c)]
+
+When 'c' is updated? To read/write the array we need to evaluate the
+variable before reading/writing the first element.
+But calculate the size of a C string depend of the content.
+So we need to add in our language boolean expressions to test values
+at each iteration.
+
+### DYNAMIC ARRAY
+
+We add in our condition rule the boolean expressions.
+
+	condition ::= number | variable | '?' expression
+	;
+
+	expression ::= // same that in C, if is eval != 0 is true
+	;
+
+So now we could write it.
+
+	CString1 = [c:char (? c != 0)]
+	// or
+	CString2 = [c:char (?c)]
+	// we could add a syntactic sugar, an expression on the value of the
+	// last read/written variable (named or builtin)
+	CString3 = [char(?)]
+
+### CONDITIONNAL PARSING
+
+As for the dynamic array we could conditionate the parsing with expressions 
+and variable evaluation. This is the classic TLV/TV/LV binary parser (Type Length Value/Type Value/Length Value).
+So we could describe a switch expression.
+
+	switch ::= '(' '?' mask_expression // no cmp operator
+		cmp_expr /* cmp operator optionnaly at begin of cmp_expr */ field
+		['|' cmp_expr field]*
+	')'
+	;
+
+	typable_fields ::= bitfield 
+		| type 
+		| array_field 
+		| struct_field
+		| switch
+	;
+
+For example:
+
+	choice:char astring:[char(?)] padding:#512
+	(? (choice & 0b00011100) >> 2
+		1 /* undefined block of 10 bytes */ [#8(10)] 
+		|3 /* a double */ #.64
+		|2 /* a complex structure */
+		{
+			"MYMAGIC":#128
+			f1:#2
+			f2:#5
+			f3:#1
+		}
+		|>3 {recurs:int (?recurs ==3 user)}
+	)
+
+### CONSTRAINT LIST AND MATCHING
+
+

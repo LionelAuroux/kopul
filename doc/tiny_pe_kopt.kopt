@@ -5,13 +5,13 @@
 // -----------------------------
 
 // ICI je defini tout mes type :
-word=16
-long=32
-dword=32
-byte=8
+@type word#16
+@type long#32
+@type dword#32
+@type byte#8
 
 // typedef struct _IMAGE_DOS_HEADER		IMAGE_DOS_HEADER, *PIMAGE_DOS_HEADER;
-_IMAGE_DOS_HEADER = {					// DOS .EXE header
+@type _IMAGE_DOS_HEADER {					// DOS .EXE header
 	e4_magic#word						// Magic number
     e_cblp#word   						// Bytes on last page of file
     e_cp#word 							// Pages in file
@@ -34,15 +34,14 @@ _IMAGE_DOS_HEADER = {					// DOS .EXE header
 } 
 
 // typedef struct _IMAGE_NT_HEADERS {
-*e_lfanew = {
-}
+@type *e_lfanew {
     Signature#dword;
     IMAGE_FILE_HEADER FileHeader;
     IMAGE_OPTIONAL_HEADER32 OptionalHeader;
 } // IMAGE_NT_HEADERS32, *PIMAGE_NT_HEADERS32;
 
 // typedef struct _IMAGE_FILE_HEADER	IMAGE_FILE_HEADER, *PIMAGE_FILE_HEADER;
-*FileHeader =
+@type *FileHeader
 {
 	Machine#word
 	NumberOfSections#word
@@ -54,8 +53,7 @@ _IMAGE_DOS_HEADER = {					// DOS .EXE header
 }
 
 // typedef struct _IMAGE_OPTIONAL_HEADER	IMAGE_OPTIONAL_HEADER32, *PIMAGE_OPTIONAL_HEADER32;
-*OptionalHeader =
-{
+*OptionalHeader:{
 	//
 	// Standard fields.
 	//
@@ -98,8 +96,13 @@ _IMAGE_DOS_HEADER = {					// DOS .EXE header
 }
 
 // typedef struct _IMAGE_DATA_DIRECTORY		IMAGE_DATA_DIRECTORY, *PIMAGE_DATA_DIRECTORY;
-*DataDirectory =
-{
+*DataDirectory:#{
     VirtualAddress#dword
     Size#dword
 } 
+
+Object:#{ }
+
+(*Object) isKindOf(t as Type) bool:
+	
+_
