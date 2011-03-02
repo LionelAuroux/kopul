@@ -282,9 +282,10 @@ As for the dynamic array we could conditionate the parsing with expressions
 and variable evaluation. This is the classic TLV/TV/LV binary parser (Type Length Value/Type Value/Length Value).
 So we could describe a switch expression.
 
-	switch ::= '(' '?' mask_expression // no cmp operator
-		cmp_expr /* cmp operator optionnaly at begin of cmp_expr */ field
-		['|' cmp_expr field]*
+	switch ::= '(' '?' [mask_expression]? // no cmp operator
+		/* cmp operator optionnaly at begin of cmp_expr */-
+		cmp_expr  [field]?
+		['|' cmp_expr [field]? ]*
 	')'
 	;
 
@@ -311,6 +312,36 @@ For example:
 		|>3 {recurs:int (?recurs ==3 user)}
 	)
 
+We could use conditional parsing with value. We only conditionate the value.
+So these means, if we found this value read/write it, otherwise we don't
+care.
+
+
+/////////////// TO RETHINK
+
+	"TOTO":(?) 0xff:(?)
+
+We could also conditionate variable to chain in a easy way complex condition.
+The variable capture the value of the cmp_expr and the field is read/write.
+
+	tag:#32	firstpart:(?tag 0xe8 #32 | 0xff | 0xae packet | 0xba juju)
+	// here fistpart could be 0xe8, 0xff or 0xae
+	// after for the 0xe8 value and 0xae we try to read a stop 0xCACA
+	(?fistpart 0xff)
+
 ### CONSTRAINT LIST AND MATCHING
 
+Write magic value everywhere in code is harmfull. 
+So put all magic value in a statement and use friendly name is better.
+Constraint a switch with such values is a maintenable way to describe
+complex data structure.
 
+	constraint ::= "<%" "%>"
+	;
+
+For example:
+	
+	flags=	<%
+		ON_EVENT1:(?<<1), ON_EVENT2, ON_EVENT3,
+		ON_EVENT4:2323,
+		%>
