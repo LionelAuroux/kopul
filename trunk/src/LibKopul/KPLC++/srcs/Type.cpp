@@ -185,12 +185,12 @@ llvm::BasicBlock*               Type::CreateLoadParamFromStream(llvm::Value *str
         }
         else
         {
-            stream = builder.CreateBitCast(i8Stream, llvm::PointerType::getUnqual(llvm::IntegerType::get(llvm::getGlobalContext(), i + sizeParamInBytes)), "streamBytes");
+            stream = builder.CreateBitCast(i8Stream, llvm::PointerType::getUnqual(llvm::IntegerType::get(llvm::getGlobalContext(), CONVERT_NBBYTES_TO_NBOCTET(i + sizeParamInBytes) * 8)), "streamBytes");
             tmp = builder.CreateLoad(stream);
-            tmp = builder.CreateUDiv(tmp, llvm::ConstantInt::get(llvm::getGlobalContext(), llvm::APInt(i + sizeParamInBytes, pow(2, i), false)), "resDiv");
+            tmp = builder.CreateUDiv(tmp, llvm::ConstantInt::get(llvm::getGlobalContext(), llvm::APInt(CONVERT_NBBYTES_TO_NBOCTET(i + sizeParamInBytes) * 8, pow(2, i), false)), "resDiv");
+            tmp = builder.CreateMul(tmp, llvm::ConstantInt::get(llvm::getGlobalContext(), llvm::APInt(CONVERT_NBBYTES_TO_NBOCTET(i + sizeParamInBytes) * 8, pow(2, CONVERT_NBBYTES_TO_NBOCTET(i + sizeParamInBytes) * 8 - sizeParamInBytes), false)), "tmp");
+            tmp = builder.CreateUDiv(tmp, llvm::ConstantInt::get(llvm::getGlobalContext(), llvm::APInt(CONVERT_NBBYTES_TO_NBOCTET(i + sizeParamInBytes) * 8, pow(2, CONVERT_NBBYTES_TO_NBOCTET(i + sizeParamInBytes) * 8 - sizeParamInBytes), false)), "tmp");
             tmp = builder.CreateIntCast(tmp, llvm::IntegerType::get(llvm::getGlobalContext(), CONVERT_NBBYTES_TO_NBOCTET(sizeParamInBytes) * 8), false, "resCast");
-            tmp = builder.CreateMul(tmp, llvm::ConstantInt::get(llvm::getGlobalContext(), llvm::APInt(CONVERT_NBBYTES_TO_NBOCTET(sizeParamInBytes) * 8, pow(2, (CONVERT_NBBYTES_TO_NBOCTET(sizeParamInBytes) * 8) - sizeParamInBytes), false)), "tmp");
-            tmp = builder.CreateUDiv(tmp, llvm::ConstantInt::get(llvm::getGlobalContext(), llvm::APInt(CONVERT_NBBYTES_TO_NBOCTET(sizeParamInBytes) * 8, pow(2, (CONVERT_NBBYTES_TO_NBOCTET(sizeParamInBytes) * 8) - sizeParamInBytes), false)), "tmp");
             builder.CreateStore(tmp, paramAdr);
             builder.CreateBr(newActionBlock);
         }
